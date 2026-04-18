@@ -13,6 +13,9 @@ All code must be written to senior Android engineer quality:
 - Use Test-Driven Development: write the failing test first, then implement
 - Unidirectional data flow; stateless composables observe ViewModel `StateFlow`
 - No third-party paid dependencies — first-party Jetpack/Google only
+- DRY: reuse before creating. Check `ui/components/`, mappers, and extensions before adding similar code.
+- SOLID: single responsibility per class; depend on interfaces, not concretions (Hilt wires them).
+- ViewModels expose state and forward intents only. **All business logic lives in use cases** under `domain/usecase/`.
 
 ## Commands
 
@@ -28,14 +31,16 @@ All code must be written to senior Android engineer quality:
 
 ## Architecture
 
-**Pattern:** Single-Activity, MVVM + Repository, unidirectional data flow.
+**Pattern:** Single-Activity, MVVM + UseCase + Repository, unidirectional data flow.
 
 ```
 com.example.chromaalbum
 ├── data/
 │   ├── local/        # Room DB, DAOs, Entities (Album, Photo)
-│   ├── repository/   # AlbumRepository — single source of truth
-│   └── model/        # Domain models
+│   └── repository/   # AlbumRepository — single source of truth
+├── domain/
+│   ├── model/        # Domain models
+│   └── usecase/      # Business logic (one use case per operation)
 ├── palette/
 │   ├── PaletteEngine.kt    # Blended multi-photo palette algorithm
 │   └── BlendedPalette.kt   # Data class for 6-swatch palette
@@ -80,10 +85,9 @@ Every feature requires tests written **before** implementation:
 | `PaletteEngine` | JUnit4 | Given N bitmaps with known colors → assert weighted-average output |
 | `ColorSchemeMapper` | JUnit4 | Given `BlendedPalette` → assert M3 role assignments pass contrast checks |
 | `AlbumRepository` | JUnit4 + mock DAO | Photo add triggers regen; debounce works |
-| ViewModels | JUnit4 + Turbine | `loading → success → error` state transitions |
+| Use cases | JUnit4 + mock repo | Business rules in isolation (debounce, sampling, fallback chain) |
+| ViewModels | JUnit4 + Turbine | `loading → success → error` state transitions; delegates to use cases |
 | Room DAOs | In-memory Room | Cascade deletes, Flow emissions, `paletteJson` round-trip |
-| Navigation | ComposeTestRule | Route args passed correctly, back nav works |
-| Screenshot | Paparazzi/Roborazzi | Light + dark dynamic themes per screen |
 
 ## Navigation
 
@@ -94,4 +98,4 @@ Type-safe Compose Navigation (Kotlin serialization):
 
 ## Key Dependencies (libs.versions.toml)
 
-Add as needed: `androidx.room`, `androidx.hilt`, `androidx.navigation-compose`, `coil3`, `androidx.palette`, `androidx.window` (WindowSizeClass), `kotlinx.serialization`, `app.cash.turbine`, `app.cash.paparazzi`.
+Add as needed: `androidx.room`, `androidx.hilt`, `androidx.navigation-compose`, `coil3`, `androidx.palette`, `androidx.window` (WindowSizeClass), `kotlinx.serialization`, `app.cash.turbine`.
