@@ -32,6 +32,9 @@ Numbered, ordered steps a developer would follow. For each step:
 ## Tests
 List every test that must be written (class + method name + what it asserts).
 
+## Potential Regressions
+List any existing tests or behaviours that this story's changes could break. If none are anticipated, say so explicitly.
+
 ## Open Questions
 Anything that needs clarification before or during implementation.
 ```
