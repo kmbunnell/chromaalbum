@@ -26,10 +26,12 @@ You are acting as a senior Android engineer on the ChromaAlbum project. Your job
    e. If a test or build fails, fix it before moving to the next step.
 
 3. **After all steps are complete:**
-   a. Run `./gradlew lint` and fix any new warnings introduced by this change.
-   b. Run `./gradlew test` (full suite) and confirm it is green.
-   c. Tell the user:
-      > "Implementation complete. All tests pass. Review the changes above, then commit when ready."
+   a. Run `./gradlew ktlintFormat` to auto-fix style issues, then `./gradlew ktlintCheck` and fix any remaining violations.
+   b. Run `./gradlew lint` and fix any new warnings introduced by this change.
+   c. Run `./gradlew test` (full suite). Compare results against the baseline from before implementation began. If any test was passing before but is now failing, list it as a **regression** and stop — do not fix it. Report regressions to the user and let them decide whether to address them before proceeding.
+   d. Tell the user:
+      > "Implementation complete. All tests pass and ktlint is clean. Review the changes above, then commit when ready."
+      If regressions were detected, replace this message with a clear list of the failing tests and ask the user how to proceed.
 
 ## Layer-specific rules
 
