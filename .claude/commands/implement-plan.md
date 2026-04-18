@@ -1,52 +1,30 @@
-You are acting as a senior Android engineer on the ChromaAlbum project. Your job is to implement the plan saved in `.claude/plan.md`.
+You are acting as a senior Android engineer on the ChromaAlbum project. Implement the plan saved in `.claude/plan.md`.
 
-**Engineering standards from CLAUDE.md apply in full:**
-- TDD: write the failing test first, then the implementation — for every step that touches logic
-- Unidirectional data flow; stateless composables observe ViewModel `StateFlow`
-- No third-party paid dependencies — first-party Jetpack/Google only
-- MVVM + Repository; single source of truth in Room
-- All palette/bitmap work on `Dispatchers.Default`, cancelled with `viewModelScope`
-- Type-safe Compose Navigation (Kotlin serialization)
-- `takePersistableUriPermission` before inserting any `content://` URI into Room
+**Engineering standards from `CLAUDE.md` apply in full.**
 
 ---
 
 ## Your task
 
-1. **Read `.claude/plan.md`** to load the approved plan. If the file does not exist, stop and tell the user:
+1. **Read `.claude/plan.md`**. If missing, stop and tell the user:
    > "No plan found at `.claude/plan.md`. Run `/plan-story` first to create one."
 
-2. **Work through the Implementation Steps in order.** For each step:
-   a. State which step you are on (e.g. "Step 2 of 7 — …").
-   b. If the step involves logic (ViewModel, Repository, PaletteEngine, Mapper, DAO), **write the test file first**, show it to the user, then implement.
-   c. Apply the changes using Edit/Write tools.
-   d. After each step, run the relevant Gradle command and report the result:
+2. **Work through Implementation Steps in order.** For each step:
+   a. State which step (e.g. "Step 2 of 7 — …").
+   b. Per CLAUDE.md testing table, write the failing unit test first for any logic layer, show it, then implement.
+   c. Apply changes via Edit/Write.
+   d. Run the relevant Gradle command:
       - Unit tests: `./gradlew test --tests "*.ClassName"`
-      - Build check: `./gradlew assembleDebug` (use when no targeted test exists)
-   e. If a test or build fails, fix it before moving to the next step.
+      - Build check: `./gradlew assembleDebug` (when no targeted test exists)
 
-3. **After all steps are complete:**
-   a. Run `./gradlew ktlintFormat` to auto-fix style issues, then `./gradlew ktlintCheck` and fix any remaining violations.
-   b. Run `./gradlew lint` and fix any new warnings introduced by this change.
-   c. Run `./gradlew test` (full suite). Compare results against the baseline from before implementation began. If any test was passing before but is now failing, list it as a **regression** and stop — do not fix it. Report regressions to the user and let them decide whether to address them before proceeding.
+3. **After all steps:**
+   a. `./gradlew ktlintFormat` then `./gradlew ktlintCheck` — fix remaining violations.
+   b. `./gradlew lint` — fix new warnings.
+   c. `./gradlew test` (full suite). If a previously-passing test is now failing, list it as a **regression** and stop — do not fix it. Let the user decide.
    d. Tell the user:
-      > "Implementation complete. All tests pass and ktlint is clean. Review the changes above, then commit when ready."
-      If regressions were detected, replace this message with a clear list of the failing tests and ask the user how to proceed.
-
-## Layer-specific rules
-
-| Layer | Rule |
-|---|---|
-| Room Entity/DAO | Write in-memory Room test first (cascade deletes, Flow emissions, JSON round-trip) |
-| Repository | Mock DAO with Mockito; assert debounce and regen trigger behaviour |
-| PaletteEngine | JUnit4 with known-color bitmaps; assert weighted-average output |
-| ColorSchemeMapper | JUnit4; assert M3 role assignments pass WCAG AA (4.5:1) contrast |
-| ViewModel | JUnit4 + Turbine; assert `loading → success → error` state transitions |
-| Composables | No logic in composables; stateless — no unit tests required unless a composable has branching display logic |
+      > "Implementation complete. Review the diff and commit when ready."
+      If regressions were detected, list the failing tests instead and ask how to proceed.
 
 ## What NOT to do
-- Do not skip writing tests for logic layers.
 - Do not batch all changes and present them at the end — apply and verify step by step.
-- Do not add comments explaining what code does; only add a comment when the WHY is non-obvious.
-- Do not introduce abstractions or refactoring beyond what the plan requires.
 - Do not proceed to the next step if the current step's tests or build is red.

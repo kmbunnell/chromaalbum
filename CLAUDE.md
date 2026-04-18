@@ -21,7 +21,6 @@ All code must be written to senior Android engineer quality:
 
 ```bash
 ./gradlew test                          # Unit tests
-./gradlew connectedAndroidTest          # Instrumented tests (device required)
 ./gradlew test --tests "*.ClassName"    # Single test class
 ./gradlew test --tests "*.Class.method" # Single test method
 ./gradlew assembleDebug                 # Build debug APK
@@ -32,27 +31,6 @@ All code must be written to senior Android engineer quality:
 ## Architecture
 
 **Pattern:** Single-Activity, MVVM + UseCase + Repository, unidirectional data flow.
-
-```
-com.example.chromaalbum
-├── data/
-│   ├── local/        # Room DB, DAOs, Entities (Album, Photo)
-│   └── repository/   # AlbumRepository — single source of truth
-├── domain/
-│   ├── model/        # Domain models
-│   └── usecase/      # Business logic (one use case per operation)
-├── palette/
-│   ├── PaletteEngine.kt    # Blended multi-photo palette algorithm
-│   └── BlendedPalette.kt   # Data class for 6-swatch palette
-├── ui/
-│   ├── theme/        # DynamicTheme, ColorSchemeMapper (palette → M3 roles)
-│   ├── home/         # HomeScreen + HomeViewModel
-│   ├── album/        # AlbumDetailScreen + AlbumViewModel
-│   ├── viewer/       # PhotoViewerScreen + ViewerViewModel
-│   └── components/   # Shared composables
-├── di/               # Hilt modules
-└── ChromaAlbumApp.kt
-```
 
 **Key data flow:** `Room Flow<Album>` → `ViewModel` parses `paletteJson` → `BlendedPalette` → `ColorSchemeMapper` → scoped `MaterialTheme(colorScheme)` wrapping album screens.
 
@@ -78,7 +56,10 @@ Store `content://` URIs from Android Photo Picker. Call `takePersistableUriPermi
 
 ## Testing Requirements
 
-Every feature requires tests written **before** implementation:
+Unit tests only (`./gradlew test`). No instrumented tests. Pure wiring — annotations, DI graph, manifest — does not require tests. All other features require tests written **before** implementation.
+
+Structure every test **Given–When–Then**: arrange state, invoke the unit under test, assert outcome. One behaviour per test. Name methods `methodUnderTest_givenX_whenY_thenZ`.
+
 
 | Layer | Tool | Focus |
 |---|---|---|
