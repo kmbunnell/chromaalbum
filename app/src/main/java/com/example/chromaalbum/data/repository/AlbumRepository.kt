@@ -1,0 +1,35 @@
+package com.example.chromaalbum.data.repository
+
+import com.example.chromaalbum.data.local.entity.Album
+import com.example.chromaalbum.data.local.entity.Photo
+import kotlinx.coroutines.flow.Flow
+
+interface AlbumRepository {
+    fun getAllAlbums(): Flow<List<Album>>
+
+    fun getAlbumById(albumId: Long): Flow<Album?>
+
+    suspend fun createAlbum(
+        name: String,
+        description: String?,
+    ): Long
+
+    suspend fun updateAlbum(album: Album)
+
+    suspend fun deleteAlbum(album: Album)
+
+    suspend fun addPhotos(
+        albumId: Long,
+        uris: List<String>,
+    )
+
+    suspend fun removePhoto(photo: Photo)
+
+    fun getPhotosForAlbum(albumId: Long): Flow<List<Photo>>
+
+    suspend fun updateAlbumPalette(
+        albumId: Long,
+        dominantColor: String,
+        paletteJson: String,
+    )
+}

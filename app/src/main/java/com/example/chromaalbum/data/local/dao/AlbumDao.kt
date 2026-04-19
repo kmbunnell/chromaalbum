@@ -16,6 +16,9 @@ interface AlbumDao {
     @Query("SELECT * FROM albums WHERE id = :albumId")
     fun getById(albumId: Long): Flow<Album?>
 
+    @Query("SELECT * FROM albums WHERE id = :albumId")
+    suspend fun getByIdOnce(albumId: Long): Album?
+
     @Insert
     suspend fun insert(album: Album): Long
 

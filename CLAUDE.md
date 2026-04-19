@@ -60,6 +60,10 @@ Unit tests only (`./gradlew test`). No instrumented tests. Pure wiring — annot
 
 Structure every test **Given–When–Then**: arrange state, invoke the unit under test, assert outcome. One behaviour per test. Name methods `methodUnderTest_givenX_whenY_thenZ`.
 
+Every test must assert behavior **we wrote**, not framework guarantees. Before adding a test, ask: if I deleted our code but left the framework intact, would this test fail? If not, drop it. Specifically:
+- Do not test Room's FK CASCADE, empty-query defaults, or constraint enforcement — Room owns those.
+- Do not write two tests that would pass or fail together — merge them or drop the weaker one.
+
 
 | Layer | Tool | Focus |
 |---|---|---|
@@ -78,4 +82,4 @@ Type-safe Compose Navigation (Kotlin serialization):
 
 ## Key Dependencies (libs.versions.toml)
 
-Add as needed: `androidx.room`, `androidx.hilt`, `androidx.navigation-compose`, `coil3`, `androidx.palette`, `androidx.window` (WindowSizeClass), `kotlinx.serialization`, `app.cash.turbine`.
+Add as needed: `androidx.room`, `androidx.hilt`, `androidx.navigation-compose`, `coil3`, `androidx.palette`, `androidx.window` (WindowSizeClass), `kotlinx.serialization`, `app.cash.turbine`, `robolectric` (JVM unit tests requiring Android Context, e.g. in-memory Room).
