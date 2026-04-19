@@ -65,10 +65,9 @@ Structure every test **Given–When–Then**: arrange state, invoke the unit und
 |---|---|---|
 | `PaletteEngine` | JUnit4 | Given N bitmaps with known colors → assert weighted-average output |
 | `ColorSchemeMapper` | JUnit4 | Given `BlendedPalette` → assert M3 role assignments pass contrast checks |
-| `AlbumRepository` | JUnit4 + mock DAO | Photo add triggers regen; debounce works |
+| `AlbumRepository` | JUnit4 + in-memory Room | Photo add triggers regen; debounce works; DAO correctness covered here, not in standalone DAO tests |
 | Use cases | JUnit4 + mock repo | Business rules in isolation (debounce, sampling, fallback chain) |
 | ViewModels | JUnit4 + Turbine | `loading → success → error` state transitions; delegates to use cases |
-| Room DAOs | In-memory Room | Cascade deletes, Flow emissions, `paletteJson` round-trip |
 
 ## Navigation
 

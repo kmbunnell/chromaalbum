@@ -4,7 +4,6 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
-import androidx.room.Transaction
 import com.example.chromaalbum.data.local.entity.Photo
 import kotlinx.coroutines.flow.Flow
 
@@ -20,7 +19,6 @@ interface PhotoDao {
     @Insert
     suspend fun insert(photo: Photo): Long
 
-    @Transaction
     @Insert
     suspend fun insertAll(photos: List<Photo>)
 
