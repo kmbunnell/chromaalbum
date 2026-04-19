@@ -1,12 +1,18 @@
 package com.example.chromaalbum.data.repository
 
+import android.net.Uri
+import androidx.core.net.toUri
 import androidx.room.withTransaction
+import com.example.chromaalbum.data.helper.UriPersistenceHelper
 import com.example.chromaalbum.data.local.ChromaAlbumDatabase
 import com.example.chromaalbum.data.local.dao.AlbumDao
 import com.example.chromaalbum.data.local.dao.PhotoDao
 import com.example.chromaalbum.data.local.entity.Album
 import com.example.chromaalbum.data.local.entity.Photo
+import com.example.chromaalbum.di.IoDispatcher
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class AlbumRepositoryImpl
@@ -15,6 +21,8 @@ class AlbumRepositoryImpl
         private val albumDao: AlbumDao,
         private val photoDao: PhotoDao,
         private val db: ChromaAlbumDatabase,
+        private val uriPersistenceHelper: UriPersistenceHelper,
+        @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) : AlbumRepository {
         override fun getAllAlbums(): Flow<List<Album>> = albumDao.getAll()
 
@@ -44,18 +52,33 @@ class AlbumRepositoryImpl
         override suspend fun addPhotos(
             albumId: Long,
             uris: List<String>,
-        ) = db.withTransaction {
-            if (uris.isEmpty()) return@withTransaction
-            val base = photoDao.getCountOnce(albumId)
-            val now = System.currentTimeMillis()
-            photoDao.insertAll(
-                uris.mapIndexed { i, uri ->
-                    Photo(albumId = albumId, uri = uri, addedAt = now, sortOrder = base + i)
-                },
-            )
-            val album = albumDao.getByIdOnce(albumId) ?: return@withTransaction
-            if (album.coverPhotoUri == null) {
-                albumDao.update(album.copy(coverPhotoUri = uris.first()))
+        ) {
+            if (uris.isEmpty()) return
+            withContext(ioDispatcher) {
+                val persisted = mutableListOf<Uri>()
+                try {
+                    uris.forEach { str ->
+                        val uri = str.toUri()
+                        uriPersistenceHelper.persist(uri)
+                        persisted += uri
+                    }
+                    db.withTransaction {
+                        val base = photoDao.getCountOnce(albumId)
+                        val now = System.currentTimeMillis()
+                        photoDao.insertAll(
+                            uris.mapIndexed { i, uri ->
+                                Photo(albumId = albumId, uri = uri, addedAt = now, sortOrder = base + i)
+                            },
+                        )
+                        val album = albumDao.getByIdOnce(albumId) ?: return@withTransaction
+                        if (album.coverPhotoUri == null) {
+                            albumDao.update(album.copy(coverPhotoUri = uris.first()))
+                        }
+                    }
+                } catch (e: Exception) {
+                    persisted.forEach { runCatching { uriPersistenceHelper.release(it) } }
+                    throw e
+                }
             }
         }
 

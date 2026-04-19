@@ -16,6 +16,8 @@ All code must be written to senior Android engineer quality:
 - DRY: reuse before creating. Check `ui/components/`, mappers, and extensions before adding similar code.
 - SOLID: single responsibility per class; depend on interfaces, not concretions (Hilt wires them).
 - ViewModels expose state and forward intents only. **All business logic lives in use cases** under `domain/usecase/`.
+- Do not create new packages or directories without asking first.
+- Do not manually construct class instances in Compose screens — always inject
 
 ## Commands
 
@@ -52,7 +54,7 @@ All code must be written to senior Android engineer quality:
 
 ## Photo Storage
 
-Store `content://` URIs from Android Photo Picker. Call `takePersistableUriPermission(uri, FLAG_GRANT_READ_URI_PERMISSION)` **before** inserting into Room. Fall back to copying bytes to internal storage if persistence is unsupported. Validate URIs on album open via `ContentResolver.query()`; show broken-image placeholder + Snackbar for invalid URIs.
+Store `content://` URIs from Android Photo Picker. Call `takePersistableUriPermission(uri, FLAG_GRANT_READ_URI_PERMISSION)` **before** inserting into Room. If persistence fails, abort the batch (release any already-granted permissions) and surface an error; do not copy bytes. Validate URIs on album open via `ContentResolver.query()`; show broken-image placeholder + Snackbar for invalid URIs.
 
 ## Testing Requirements
 
