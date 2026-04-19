@@ -1,11 +1,16 @@
 package com.example.chromaalbum.data.repository
 
 import android.content.Context
+import android.net.Uri
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import com.example.chromaalbum.data.helper.UriNotPersistableException
+import com.example.chromaalbum.data.helper.UriPersistenceHelper
 import com.example.chromaalbum.data.local.ChromaAlbumDatabase
 import com.example.chromaalbum.data.local.entity.Album
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -18,11 +23,31 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
+private class FakeUriPersistenceHelper(
+    private val throwOnCallIndex: Int = -1,
+) : UriPersistenceHelper {
+    val capturedUris = mutableListOf<Uri>()
+    val releasedUris = mutableListOf<Uri>()
+    private var callCount = 0
+
+    override fun persist(uri: Uri) {
+        val index = callCount++
+        capturedUris += uri
+        if (index == throwOnCallIndex) throw UriNotPersistableException(uri, SecurityException("fake"))
+    }
+
+    override fun release(uri: Uri) {
+        releasedUris += uri
+    }
+}
+
 // sdk = [35]: robolectric 4.14.1 caps at API 35 — bump when robolectric supports higher
+@OptIn(ExperimentalCoroutinesApi::class)
 @Config(sdk = [35])
 @RunWith(RobolectricTestRunner::class)
 class AlbumRepositoryImplTest {
     private lateinit var db: ChromaAlbumDatabase
+    private lateinit var fakeHelper: FakeUriPersistenceHelper
     private lateinit var repository: AlbumRepositoryImpl
 
     @Before
@@ -33,7 +58,8 @@ class AlbumRepositoryImplTest {
                 .inMemoryDatabaseBuilder(context, ChromaAlbumDatabase::class.java)
                 .allowMainThreadQueries()
                 .build()
-        repository = AlbumRepositoryImpl(db.albumDao(), db.photoDao(), db)
+        fakeHelper = FakeUriPersistenceHelper()
+        repository = AlbumRepositoryImpl(db.albumDao(), db.photoDao(), db, fakeHelper, UnconfinedTestDispatcher())
     }
 
     @After
@@ -258,5 +284,77 @@ class AlbumRepositoryImplTest {
             val album = repository.getAlbumById(albumId).first()!!
             assertEquals(dominant, album.dominantColor)
             assertEquals(palette, album.paletteJson)
+        }
+
+    @Test
+    fun addPhotos_givenUris_whenCalled_thenHelperPersistCalledForEachUri() =
+        runTest {
+            // Given
+            val albumId = repository.createAlbum("Album", null)
+            val uris = listOf("content://com.example/1", "content://com.example/2")
+
+            // When
+            repository.addPhotos(albumId, uris)
+
+            // Then
+            assertEquals(uris.map { Uri.parse(it) }, fakeHelper.capturedUris)
+        }
+
+    @Test
+    fun addPhotos_givenAllPersistSucceedButTransactionFails_whenCalled_thenAllPersistedUrisReleased() =
+        runTest {
+            // Given
+            val albumId = repository.createAlbum("Album", null)
+            val uris = listOf("content://com.example/1", "content://com.example/2")
+            val releasedUris = mutableListOf<Uri>()
+            val dbClosingHelper =
+                object : UriPersistenceHelper {
+                    private val persisted = mutableListOf<Uri>()
+
+                    override fun persist(uri: Uri) {
+                        persisted += uri
+                        if (persisted.size == uris.size) db.close()
+                    }
+
+                    override fun release(uri: Uri) {
+                        releasedUris += uri
+                    }
+                }
+            val testRepo = AlbumRepositoryImpl(db.albumDao(), db.photoDao(), db, dbClosingHelper, UnconfinedTestDispatcher())
+
+            // When
+            var caught: Exception? = null
+            try {
+                testRepo.addPhotos(albumId, uris)
+            } catch (e: Exception) {
+                caught = e
+            }
+
+            // Then
+            assertNotNull(caught)
+            assertEquals(uris.map { Uri.parse(it) }, releasedUris)
+        }
+
+    @Test
+    fun addPhotos_givenPartialBatchPersistFails_whenSecondUriThrows_thenAlreadyPersistedUrisReleasedAndNoPhotosInserted() =
+        runTest {
+            // Given
+            val albumId = repository.createAlbum("Album", null)
+            fakeHelper = FakeUriPersistenceHelper(throwOnCallIndex = 1)
+            repository = AlbumRepositoryImpl(db.albumDao(), db.photoDao(), db, fakeHelper, UnconfinedTestDispatcher())
+            val uris = listOf("content://com.example/1", "content://com.example/2")
+
+            // When
+            var caught: UriNotPersistableException? = null
+            try {
+                repository.addPhotos(albumId, uris)
+            } catch (e: UriNotPersistableException) {
+                caught = e
+            }
+
+            // Then
+            assertNotNull(caught)
+            assertEquals(listOf(Uri.parse("content://com.example/1")), fakeHelper.releasedUris)
+            assertTrue(repository.getPhotosForAlbum(albumId).first().isEmpty())
         }
 }
