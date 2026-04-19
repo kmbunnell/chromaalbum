@@ -15,10 +15,11 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
-
     @Provides
     @Singleton
-    fun provideDatabase(@ApplicationContext context: Context): ChromaAlbumDatabase =
+    fun provideDatabase(
+        @ApplicationContext context: Context,
+    ): ChromaAlbumDatabase =
         // Add .addMigrations(...) here before incrementing the schema version
         Room.databaseBuilder(context, ChromaAlbumDatabase::class.java, "chroma_album.db").build()
 

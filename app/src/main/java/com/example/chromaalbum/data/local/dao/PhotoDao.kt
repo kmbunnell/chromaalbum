@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PhotoDao {
-
     @Query("SELECT * FROM photos WHERE albumId = :albumId ORDER BY sortOrder ASC")
     fun getByAlbumId(albumId: Long): Flow<List<Photo>>
 
@@ -26,5 +25,8 @@ interface PhotoDao {
     suspend fun delete(photo: Photo)
 
     @Query("UPDATE photos SET sortOrder = :sortOrder WHERE id = :photoId")
-    suspend fun updateSortOrder(photoId: Long, sortOrder: Int)
+    suspend fun updateSortOrder(
+        photoId: Long,
+        sortOrder: Int,
+    )
 }

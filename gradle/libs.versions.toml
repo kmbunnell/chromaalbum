@@ -15,7 +15,7 @@ coil = "3.1.0"
 navigationCompose = "2.8.9"
 kotlinxSerialization = "1.8.1"
 hiltNavigationCompose = "1.2.0"
-ktlintGradle = "12.1.2"
+spotless = "7.0.2"
 turbine = "1.2.0"
 coroutinesTest = "1.10.2"
 
@@ -56,4 +56,4 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
-ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlintGradle" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
