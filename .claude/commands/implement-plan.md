@@ -28,3 +28,4 @@ You are acting as a senior Android engineer on the ChromaAlbum project. Implemen
 ## What NOT to do
 - Do not batch all changes and present them at the end — apply and verify step by step.
 - Do not proceed to the next step if the current step's tests or build is red.
+- If the same test is still failing after 3 fix attempts, stop immediately and report the failure with the full error output. Ask the user how to proceed — do not make a 4th attempt.

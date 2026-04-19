@@ -15,6 +15,12 @@ interface PhotoDao {
     @Query("SELECT COUNT(*) FROM photos WHERE albumId = :albumId")
     fun getPhotoCount(albumId: Long): Flow<Int>
 
+    @Query("SELECT COUNT(*) FROM photos WHERE albumId = :albumId")
+    suspend fun getCountOnce(albumId: Long): Int
+
+    @Query("SELECT * FROM photos WHERE albumId = :albumId ORDER BY sortOrder ASC LIMIT 1")
+    suspend fun getFirstPhotoOnce(albumId: Long): Photo?
+
     @Insert
     suspend fun insert(photo: Photo): Long
 
