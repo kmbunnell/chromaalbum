@@ -4,7 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
-    alias(libs.plugins.ktlint)
+    alias(libs.plugins.spotless)
 }
 
 android {
@@ -49,8 +49,14 @@ ksp {
     arg("room.incremental", "true")
 }
 
-ktlint {
-    android.set(true)
+spotless {
+    kotlin {
+        target("src/**/*.kt")
+        ktlint()
+    }
+    kotlinGradle {
+        ktlint()
+    }
 }
 
 dependencies {

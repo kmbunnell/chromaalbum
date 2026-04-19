@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface AlbumDao {
-
     @Query("SELECT * FROM albums ORDER BY updatedAt DESC")
     fun getAll(): Flow<List<Album>>
 
@@ -27,7 +26,12 @@ interface AlbumDao {
     suspend fun delete(album: Album)
 
     @Query(
-        "UPDATE albums SET dominantColor = :dominantColor, paletteJson = :paletteJson, updatedAt = :updatedAt WHERE id = :albumId"
+        "UPDATE albums SET dominantColor = :dominantColor, paletteJson = :paletteJson, updatedAt = :updatedAt WHERE id = :albumId",
     )
-    suspend fun updatePalette(albumId: Long, dominantColor: String, paletteJson: String, updatedAt: Long)
+    suspend fun updatePalette(
+        albumId: Long,
+        dominantColor: String,
+        paletteJson: String,
+        updatedAt: Long,
+    )
 }
