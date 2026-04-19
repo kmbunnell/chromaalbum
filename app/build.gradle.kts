@@ -44,6 +44,11 @@ android {
     }
 }
 
+ksp {
+    arg("room.schemaLocation", project.projectDir.absolutePath + "/schemas")
+    arg("room.incremental", "true")
+}
+
 ktlint {
     android.set(true)
 }
