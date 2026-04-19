@@ -20,6 +20,7 @@ turbine = "1.2.0"
 coroutinesTest = "1.10.2"
 robolectric = "4.14.1"
 androidxTestCore = "1.6.1"
+palette = "1.0.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -52,6 +53,7 @@ kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }
+androidx-palette = { group = "androidx.palette", name = "palette", version.ref = "palette" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -15,4 +15,9 @@ object CoroutinesModule {
     @Singleton
     @IoDispatcher
     fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
+
+    @Provides
+    @Singleton
+    @DefaultDispatcher
+    fun provideDefaultDispatcher(): CoroutineDispatcher = Dispatchers.Default
 }

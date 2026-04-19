@@ -34,6 +34,8 @@ All code must be written to senior Android engineer quality:
 
 **Pattern:** Single-Activity, MVVM + UseCase + Repository, unidirectional data flow.
 
+**Domain layer:** Domain services (e.g. `PaletteCompleter`) encapsulate pure domain logic shared across use cases and live alongside the interfaces they support (e.g. `domain/palette/`).
+
 **Key data flow:** `Room Flow<Album>` → `ViewModel` parses `paletteJson` → `BlendedPalette` → `ColorSchemeMapper` → scoped `MaterialTheme(colorScheme)` wrapping album screens.
 
 ## Dynamic Theming
@@ -49,7 +51,7 @@ All code must be written to senior Android engineer quality:
 - Blends palettes across **all** photos (not just cover): downsample each to 100×100, extract per-photo Palette, weighted-average by pixel population per swatch category
 - Photo additions debounced 2 seconds before triggering regeneration
 - Albums >50 photos: sample 50 evenly-spaced
-- Fallback chain when a swatch is absent: `vibrant → muted → darkMuted → #6750A4`
+3- Raw extraction leaves nulls in `BlendedPalette`. `PaletteCompleter` fills structural gaps using HSL derivation from available swatches; if all swatches are null it passes through unchanged. `ColorSchemeMapper` owns the final hardcoded fallback (`#6750A4`) for the all-null case.
 - All processing on `Dispatchers.Default`; cancels with `viewModelScope`
 
 ## Photo Storage
