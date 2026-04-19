@@ -68,6 +68,21 @@ class AlbumRepositoryImplTest {
     }
 
     @Test
+    fun getAllAlbums_givenAlbumsWithDifferentUpdatedAt_whenCollected_thenOrderedNewestFirst() =
+        runTest {
+            // Given — fixed timestamps guarantee deterministic order regardless of wall clock
+            db.albumDao().insert(Album(name = "Older", description = null, createdAt = 1000L, updatedAt = 1000L, coverPhotoUri = null))
+            db.albumDao().insert(Album(name = "Newer", description = null, createdAt = 2000L, updatedAt = 2000L, coverPhotoUri = null))
+
+            // When
+            val albums = repository.getAllAlbums().first()
+
+            // Then
+            assertEquals("Newer", albums[0].name)
+            assertEquals("Older", albums[1].name)
+        }
+
+    @Test
     fun getAllAlbums_givenInsertedAlbums_whenCollected_thenReturnsAll() =
         runTest {
             // Given
