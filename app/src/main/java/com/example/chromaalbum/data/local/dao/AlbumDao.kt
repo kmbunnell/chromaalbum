@@ -33,7 +33,7 @@ interface AlbumDao {
     )
     suspend fun updatePalette(
         albumId: Long,
-        dominantColor: String,
+        dominantColor: String?,
         paletteJson: String,
         updatedAt: Long,
     )

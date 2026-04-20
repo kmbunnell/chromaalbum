@@ -35,7 +35,7 @@ class PhotoLoaderImpl
                         .build()
                 when (val result = imageLoader.execute(request)) {
                     is SuccessResult -> result.image.toBitmap()
-                    is ErrorResult -> throw IllegalStateException("Failed to load photo")
+                    is ErrorResult -> throw IllegalStateException("Failed to load photo", result.throwable)
                 }
             }
     }
