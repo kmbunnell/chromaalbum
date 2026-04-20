@@ -8,7 +8,10 @@ import com.example.chromaalbum.data.helper.UriNotPersistableException
 import com.example.chromaalbum.data.helper.UriPersistenceHelper
 import com.example.chromaalbum.data.local.ChromaAlbumDatabase
 import com.example.chromaalbum.data.local.entity.Album
+import com.example.chromaalbum.domain.model.BlendedPalette
+import com.example.chromaalbum.domain.model.SwatchData
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.serialization.json.Json
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -285,20 +288,91 @@ class AlbumRepositoryImplTest {
         }
 
     @Test
-    fun updateAlbumPalette_givenValidData_whenCalled_thenPaletteFieldsUpdated() =
+    fun persistPalette_givenPaletteWithVibrant_whenCalled_thenDominantColorIsVibrantHex() =
         runTest {
             // Given
             val albumId = repository.createAlbum("Album", null)
-            val palette = """{"vibrant":"#FF0000"}"""
-            val dominant = "#FF0000"
+            val palette = BlendedPalette(
+                vibrant = SwatchData(hex = "#FF0000", titleText = "#FFFFFF"),
+                darkVibrant = SwatchData(hex = "#AA0000", titleText = "#FFFFFF"),
+                lightVibrant = null,
+                muted = null,
+                darkMuted = null,
+                lightMuted = null,
+            )
 
             // When
-            repository.updateAlbumPalette(albumId, dominant, palette)
+            repository.persistPalette(albumId, palette)
 
             // Then
             val album = repository.getAlbumById(albumId).first()!!
-            assertEquals(dominant, album.dominantColor)
-            assertEquals(palette, album.paletteJson)
+            assertEquals(palette.vibrant!!.hex, album.dominantColor)
+        }
+
+    @Test
+    fun persistPalette_givenPaletteWithNullVibrant_whenCalled_thenDominantColorIsFirstNonNullSwatchHex() =
+        runTest {
+            // Given
+            val albumId = repository.createAlbum("Album", null)
+            val palette = BlendedPalette(
+                vibrant = null,
+                darkVibrant = SwatchData(hex = "#AA0000", titleText = "#FFFFFF"),
+                lightVibrant = null,
+                muted = null,
+                darkMuted = null,
+                lightMuted = null,
+            )
+
+            // When
+            repository.persistPalette(albumId, palette)
+
+            // Then
+            val album = repository.getAlbumById(albumId).first()!!
+            assertEquals(palette.darkVibrant!!.hex, album.dominantColor)
+        }
+
+    @Test
+    fun persistPalette_givenAllNullSwatches_whenCalled_thenDominantColorIsNull() =
+        runTest {
+            // Given
+            val albumId = repository.createAlbum("Album", null)
+            val palette = BlendedPalette(
+                vibrant = null,
+                darkVibrant = null,
+                lightVibrant = null,
+                muted = null,
+                darkMuted = null,
+                lightMuted = null,
+            )
+
+            // When
+            repository.persistPalette(albumId, palette)
+
+            // Then
+            val album = repository.getAlbumById(albumId).first()!!
+            assertNull(album.dominantColor)
+        }
+
+    @Test
+    fun persistPalette_givenPalette_whenCalled_thenPaletteJsonRoundTripsFromDb() =
+        runTest {
+            // Given
+            val albumId = repository.createAlbum("Album", null)
+            val palette = BlendedPalette(
+                vibrant = SwatchData(hex = "#FF0000", titleText = "#FFFFFF"),
+                darkVibrant = null,
+                lightVibrant = SwatchData(hex = "#FF6666", titleText = "#000000"),
+                muted = null,
+                darkMuted = null,
+                lightMuted = null,
+            )
+
+            // When
+            repository.persistPalette(albumId, palette)
+
+            // Then
+            val album = repository.getAlbumById(albumId).first()!!
+            assertEquals(palette, Json.decodeFromString<BlendedPalette>(album.paletteJson))
         }
 
     @Test

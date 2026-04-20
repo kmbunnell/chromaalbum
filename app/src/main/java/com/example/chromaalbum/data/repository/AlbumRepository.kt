@@ -2,6 +2,7 @@ package com.example.chromaalbum.data.repository
 
 import com.example.chromaalbum.data.local.entity.Album
 import com.example.chromaalbum.data.local.entity.Photo
+import com.example.chromaalbum.domain.model.BlendedPalette
 import kotlinx.coroutines.flow.Flow
 
 interface AlbumRepository {
@@ -27,9 +28,5 @@ interface AlbumRepository {
 
     fun getPhotosForAlbum(albumId: Long): Flow<List<Photo>>
 
-    suspend fun updateAlbumPalette(
-        albumId: Long,
-        dominantColor: String,
-        paletteJson: String,
-    )
+    suspend fun persistPalette(albumId: Long, palette: BlendedPalette)
 }

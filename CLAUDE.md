@@ -16,7 +16,7 @@ All code must be written to senior Android engineer quality:
 - DRY: reuse before creating. Check `ui/components/`, mappers, and extensions before adding similar code.
 - SOLID: single responsibility per class; depend on interfaces, not concretions (Hilt wires them).
 - ViewModels expose state and forward intents only. **All business logic lives in use cases** under `domain/usecase/`.
-- Never swallow `CancellationException` in coroutines. Always precede a broad `catch` with `catch (e: CancellationException) { throw e }`; avoid `runCatching { }.getOrNull()` for the same reason.
+- Never swallow `CancellationException` in coroutines. When a `catch (e: Exception)` block handles an error without rethrowing, precede it with `catch (e: CancellationException) { throw e }`. If the catch block unconditionally rethrows (e.g. cleanup then `throw e`), the separate CE guard is redundant — a single `catch (e: Exception)` suffices since CE is rethrown with everything else. Avoid `runCatching { }.getOrNull()` for the same reason.
 - Do not create new packages or directories without asking first.
 - Do not manually construct class instances in Compose screens — always inject
 
