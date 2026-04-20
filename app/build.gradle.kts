@@ -82,6 +82,7 @@ dependencies {
     implementation(libs.androidx.palette)
     ksp(libs.hilt.compiler)
     ksp(libs.room.compiler)
+    testImplementation(libs.coil.test)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)

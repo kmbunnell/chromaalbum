@@ -23,7 +23,7 @@ class PaletteCompleter
             )
         }
 
-        private fun firstNonNull (palette: BlendedPalette): SwatchData =
+        private fun firstNonNull(palette: BlendedPalette): SwatchData =
             checkNotNull(
                 palette.muted ?: palette.darkMuted
                     ?: palette.darkVibrant ?: palette.lightVibrant ?: palette.lightMuted,
