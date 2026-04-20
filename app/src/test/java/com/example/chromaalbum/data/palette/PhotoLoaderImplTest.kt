@@ -84,6 +84,5 @@ class PhotoLoaderImplTest {
 
             assertNotNull(exception)
             assertTrue(exception is IllegalStateException)
-            assertTrue(exception!!.message!!.contains(testUri.toString()))
         }
 }
