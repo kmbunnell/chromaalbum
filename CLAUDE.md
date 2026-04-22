@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ChromaAlbum — Android photo album app that auto-generates dynamic color themes from album photos using the Palette API. Target: API 26+, single-module.
 
+## Guiding Principle
+
+Always present the best architectural solution, not merely one that satisfies acceptance criteria. Evaluate trade-offs before proposing a plan — if a cleaner design exists, recommend it even if a simpler path would compile and pass tests.
+
 ## Engineering Standards
 
 All code must be written to senior Android engineer quality:
@@ -67,6 +71,8 @@ Structure every test **Given–When–Then**: arrange state, invoke the unit und
 
 Every test must assert behavior **we wrote**, not framework guarantees. Before adding a test, ask: if I deleted our code but left the framework intact, would this test fail? If not, drop it. Specifically:
 - Do not test Room's FK CASCADE, empty-query defaults, or constraint enforcement — Room owns those.
+- Do not test basic `@Insert`/`@Update`/`@Delete` mechanics on repository pass-throughs — those are annotation-processor guarantees, not our logic.
+- **Do** test custom SQL we wrote (ORDER BY, JOIN, WHERE with domain logic) — the query is ours even though Room executes it.
 - Do not write two tests that would pass or fail together — merge them or drop the weaker one.
 
 

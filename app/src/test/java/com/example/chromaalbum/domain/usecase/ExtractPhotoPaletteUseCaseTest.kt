@@ -70,6 +70,7 @@ class ExtractPhotoPaletteUseCaseTest {
         private val palette: BlendedPalette,
     ) : PaletteEngine {
         override suspend fun extractPalette(bitmap: Bitmap): BlendedPalette = palette
+
         override suspend fun blendPalettes(uris: List<Uri>): BlendedPalette? = null
     }
 }

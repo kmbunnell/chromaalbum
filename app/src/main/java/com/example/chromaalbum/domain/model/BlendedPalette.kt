@@ -22,5 +22,4 @@ data class BlendedPalette(
     fun dominantHex(): String? =
         vibrant?.hex
             ?: listOf(darkVibrant, lightVibrant, muted, darkMuted, lightMuted).firstNotNullOfOrNull { it?.hex }
-
 }

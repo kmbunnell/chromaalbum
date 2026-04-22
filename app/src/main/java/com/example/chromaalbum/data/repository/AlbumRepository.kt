@@ -28,5 +28,8 @@ interface AlbumRepository {
 
     fun getPhotosForAlbum(albumId: Long): Flow<List<Photo>>
 
-    suspend fun persistPalette(albumId: Long, palette: BlendedPalette)
+    suspend fun persistPalette(
+        albumId: Long,
+        palette: BlendedPalette,
+    )
 }
