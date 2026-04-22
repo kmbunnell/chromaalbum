@@ -1,4 +1,4 @@
-package com.example.chromaalbum.data.repository
+package com.example.chromaalbum.domain.repository
 
 import com.example.chromaalbum.data.local.entity.Album
 import com.example.chromaalbum.data.local.entity.Photo

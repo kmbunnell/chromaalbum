@@ -71,6 +71,6 @@ class ExtractPhotoPaletteUseCaseTest {
     ) : PaletteEngine {
         override suspend fun extractPalette(bitmap: Bitmap): BlendedPalette = palette
 
-        override suspend fun blendPalettes(uris: List<Uri>): BlendedPalette? = null
+        override suspend fun blendPalettes(bitmaps: List<Bitmap>): BlendedPalette? = null
     }
 }

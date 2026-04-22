@@ -4,8 +4,8 @@ import android.content.ContentResolver
 import android.content.Context
 import com.example.chromaalbum.data.helper.UriPersistenceHelper
 import com.example.chromaalbum.data.helper.UriPersistenceHelperImpl
-import com.example.chromaalbum.data.repository.AlbumRepository
 import com.example.chromaalbum.data.repository.AlbumRepositoryImpl
+import com.example.chromaalbum.domain.repository.AlbumRepository
 import dagger.Binds
 import dagger.Module
 import dagger.Provides

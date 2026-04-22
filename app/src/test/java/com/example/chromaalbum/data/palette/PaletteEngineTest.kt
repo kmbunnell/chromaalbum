@@ -2,8 +2,6 @@ package com.example.chromaalbum.data.palette
 
 import android.graphics.Bitmap
 import android.graphics.Color
-import android.net.Uri
-import com.example.chromaalbum.domain.palette.PhotoLoader
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -15,7 +13,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import java.io.IOException
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Config(sdk = [35])
@@ -23,10 +20,7 @@ import java.io.IOException
 
 class PaletteEngineTest {
     private val dispatcher = UnconfinedTestDispatcher()
-    private val stubPhotoLoader = object : PhotoLoader {
-        override suspend fun load(uri: Uri): Bitmap = throw IOException("unused in extractPalette tests")
-    }
-    private val engine = PaletteEngineImpl(dispatcher, stubPhotoLoader)
+    private val engine = PaletteEngineImpl(dispatcher)
 
     @Test
     fun extractPalette_givenSwatch_thenSwatchDataHasWellFormedHexAndTitleText() =
@@ -54,7 +48,6 @@ class PaletteEngineTest {
     @Test
     fun extractPalette_givenNullSwatch_thenSwatchDataIsNull() =
         runTest(dispatcher) {
-            // A 1×1 fully transparent bitmap yields no Palette swatches.
             val bitmap =
                 Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888).apply {
                     setPixel(0, 0, Color.TRANSPARENT)
@@ -62,7 +55,6 @@ class PaletteEngineTest {
 
             val result = engine.extractPalette(bitmap)
 
-            // With no swatches and all fallbacks null, every category is null
             assertNull(result.vibrant)
             assertNull(result.darkVibrant)
             assertNull(result.lightVibrant)
@@ -74,13 +66,9 @@ class PaletteEngineTest {
     @Test
     fun blendPalettes_givenMultipleIdenticalColorBitmaps_thenBlendedSwatchReflectsThatColor() =
         runTest(dispatcher) {
-            val uris = listOf(Uri.parse("content://a"), Uri.parse("content://b"))
-            val loader = object : PhotoLoader {
-                override suspend fun load(uri: Uri): Bitmap = solidBitmap(Color.RED)
-            }
-            val localEngine = PaletteEngineImpl(dispatcher, loader)
+            val bitmaps = listOf(solidBitmap(Color.RED), solidBitmap(Color.RED))
 
-            val result = localEngine.blendPalettes(uris)
+            val result = engine.blendPalettes(bitmaps)
 
             assertNotNull("expected non-null result from solid red bitmaps", result)
             val swatch = with(result!!) { vibrant ?: darkVibrant ?: lightVibrant ?: muted ?: darkMuted ?: lightMuted }
@@ -93,37 +81,11 @@ class PaletteEngineTest {
         }
 
     @Test
-    fun blendPalettes_givenAllUrisFailToLoad_thenReturnsNull() =
+    fun blendPalettes_givenEmptyList_thenReturnsNull() =
         runTest(dispatcher) {
-            val uris = listOf(Uri.parse("content://fail1"), Uri.parse("content://fail2"))
-            val loader = object : PhotoLoader {
-                override suspend fun load(uri: Uri): Bitmap = throw IOException("load failed")
-            }
-            val localEngine = PaletteEngineImpl(dispatcher, loader)
+            val result = engine.blendPalettes(emptyList())
 
-            val result = localEngine.blendPalettes(uris)
-
-            assertNull("all failures should return null", result)
-        }
-
-    @Test
-    fun blendPalettes_givenSomeUrisFailToLoad_thenSkipsFailedAndBlendsRest() =
-        runTest(dispatcher) {
-            val goodUri = Uri.parse("content://good")
-            val badUri = Uri.parse("content://bad")
-            val loader = object : PhotoLoader {
-                override suspend fun load(uri: Uri): Bitmap =
-                    if (uri == goodUri) solidBitmap(Color.RED) else throw IOException("bad uri")
-            }
-            val localEngine = PaletteEngineImpl(dispatcher, loader)
-
-            val result = localEngine.blendPalettes(listOf(badUri, goodUri))
-
-            assertNotNull("failed URI should be skipped; good URI should produce a result", result)
-            val swatch = with(result!!) { vibrant ?: darkVibrant ?: lightVibrant ?: muted ?: darkMuted ?: lightMuted }
-            assertNotNull("good bitmap should produce at least one swatch", swatch)
-            val r = swatch!!.hex.removePrefix("#").toLong(16).toInt().shr(16) and 0xFF
-            assertTrue("swatch should reflect the red good-bitmap, not the failed URI", r > 100)
+            assertNull("empty bitmap list should return null", result)
         }
 
     private fun solidBitmap(color: Int): Bitmap {

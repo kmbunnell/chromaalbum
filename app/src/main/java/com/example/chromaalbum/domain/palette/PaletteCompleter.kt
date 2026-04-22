@@ -6,10 +6,14 @@ import javax.inject.Inject
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-class PaletteCompleter
+interface PaletteCompleter {
+    fun complete(palette: BlendedPalette): BlendedPalette
+}
+
+class PaletteCompleterImpl
     @Inject
-    constructor() {
-        fun complete(palette: BlendedPalette): BlendedPalette {
+    constructor() : PaletteCompleter {
+        override fun complete(palette: BlendedPalette): BlendedPalette {
             if (palette.isEmpty()) return palette
             val vibrant = palette.vibrant ?: firstNonNull(palette)
             val muted = palette.muted ?: derive(vibrant, saturationScale = 0.4f)

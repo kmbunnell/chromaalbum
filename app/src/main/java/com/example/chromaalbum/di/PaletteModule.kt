@@ -4,6 +4,8 @@ import android.content.Context
 import coil3.ImageLoader
 import com.example.chromaalbum.data.palette.PaletteEngineImpl
 import com.example.chromaalbum.data.palette.PhotoLoaderImpl
+import com.example.chromaalbum.domain.palette.PaletteCompleter
+import com.example.chromaalbum.domain.palette.PaletteCompleterImpl
 import com.example.chromaalbum.domain.palette.PaletteEngine
 import com.example.chromaalbum.domain.palette.PhotoLoader
 import dagger.Binds
@@ -17,6 +19,10 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class PaletteModule {
+    @Binds
+    @Singleton
+    abstract fun bindPaletteCompleter(impl: PaletteCompleterImpl): PaletteCompleter
+
     @Binds
     @Singleton
     abstract fun bindPaletteEngine(impl: PaletteEngineImpl): PaletteEngine
