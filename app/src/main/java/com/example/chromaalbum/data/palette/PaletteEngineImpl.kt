@@ -2,15 +2,12 @@ package com.example.chromaalbum.data.palette
 
 import android.graphics.Bitmap
 import android.graphics.Color
-import android.net.Uri
 import androidx.core.graphics.scale
 import androidx.palette.graphics.Palette
 import com.example.chromaalbum.di.DefaultDispatcher
 import com.example.chromaalbum.domain.model.BlendedPalette
 import com.example.chromaalbum.domain.model.SwatchData
 import com.example.chromaalbum.domain.palette.PaletteEngine
-import com.example.chromaalbum.domain.palette.PhotoLoader
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -21,7 +18,6 @@ class PaletteEngineImpl
     @Inject
     constructor(
         @param:DefaultDispatcher private val dispatcher: CoroutineDispatcher,
-        private val photoLoader: PhotoLoader,
     ) : PaletteEngine {
         override suspend fun extractPalette(bitmap: Bitmap): BlendedPalette =
             withContext(dispatcher) {
@@ -31,20 +27,14 @@ class PaletteEngineImpl
                 blendedPaletteFrom(palette)
             }
 
-        override suspend fun blendPalettes(uris: List<Uri>): BlendedPalette? =
+        override suspend fun blendPalettes(bitmaps: List<Bitmap>): BlendedPalette? =
             withContext(dispatcher) {
                 val palettes =
-                    uris.mapNotNull { uri ->
-                        try {
-                            val bitmap = photoLoader.load(uri)
-                            val palette = extractRawPalette(bitmap)
-                            bitmap.recycle()
-                            palette
-                        } catch (e: CancellationException) {
-                            throw e
-                        } catch (_: Exception) {
-                            null
-                        }
+                    bitmaps.map { bitmap ->
+                        val scaled = bitmap.scale(100, 100)
+                        val palette = extractRawPalette(scaled)
+                        if (scaled !== bitmap) scaled.recycle()
+                        palette
                     }
                 if (palettes.isEmpty()) return@withContext null
 

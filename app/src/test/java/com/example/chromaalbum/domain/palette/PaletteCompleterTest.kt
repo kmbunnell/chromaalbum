@@ -18,7 +18,7 @@ class PaletteCompleterTest {
 
     @Before
     fun setUp() {
-        completer = PaletteCompleter()
+        completer = PaletteCompleterImpl()
     }
 
     @Test

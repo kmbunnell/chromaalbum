@@ -11,6 +11,7 @@ import com.example.chromaalbum.data.local.entity.Album
 import com.example.chromaalbum.data.local.entity.Photo
 import com.example.chromaalbum.di.IoDispatcher
 import com.example.chromaalbum.domain.model.BlendedPalette
+import com.example.chromaalbum.domain.repository.AlbumRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
