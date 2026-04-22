@@ -2,9 +2,7 @@ package com.example.chromaalbum.data.repository
 
 import android.net.Uri
 import androidx.core.net.toUri
-import androidx.room.withTransaction
 import com.example.chromaalbum.data.helper.UriPersistenceHelper
-import com.example.chromaalbum.data.local.ChromaAlbumDatabase
 import com.example.chromaalbum.data.local.dao.AlbumDao
 import com.example.chromaalbum.data.local.dao.PhotoDao
 import com.example.chromaalbum.data.local.entity.Album
@@ -23,7 +21,6 @@ class AlbumRepositoryImpl
     constructor(
         private val albumDao: AlbumDao,
         private val photoDao: PhotoDao,
-        private val db: ChromaAlbumDatabase,
         private val uriPersistenceHelper: UriPersistenceHelper,
         @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) : AlbumRepository {
@@ -52,32 +49,17 @@ class AlbumRepositoryImpl
 
         override suspend fun deleteAlbum(album: Album) = albumDao.delete(album)
 
-        override suspend fun addPhotos(
-            albumId: Long,
-            uris: List<String>,
-        ) {
-            if (uris.isEmpty()) return
+        override suspend fun addPhotos(photos: List<Photo>) {
+            if (photos.isEmpty()) return
             withContext(ioDispatcher) {
                 val persisted = mutableListOf<Uri>()
                 try {
-                    uris.forEach { str ->
-                        val uri = str.toUri()
+                    photos.forEach { photo ->
+                        val uri = photo.uri.toUri()
                         uriPersistenceHelper.persist(uri)
                         persisted += uri
                     }
-                    db.withTransaction {
-                        val base = photoDao.getCountOnce(albumId)
-                        val now = System.currentTimeMillis()
-                        photoDao.insertAll(
-                            uris.mapIndexed { i, uri ->
-                                Photo(albumId = albumId, uri = uri, addedAt = now, sortOrder = base + i)
-                            },
-                        )
-                        val album = albumDao.getByIdOnce(albumId) ?: return@withTransaction
-                        if (album.coverPhotoUri == null) {
-                            albumDao.update(album.copy(coverPhotoUri = uris.first()))
-                        }
-                    }
+                    photoDao.insertAll(photos)
                 } catch (e: Exception) {
                     releaseAll(persisted)
                     throw e
@@ -85,14 +67,7 @@ class AlbumRepositoryImpl
             }
         }
 
-        override suspend fun removePhoto(photo: Photo) =
-            db.withTransaction {
-                photoDao.delete(photo)
-                val album = albumDao.getByIdOnce(photo.albumId) ?: return@withTransaction
-                if (album.coverPhotoUri == photo.uri) {
-                    albumDao.update(album.copy(coverPhotoUri = photoDao.getFirstPhotoOnce(photo.albumId)?.uri))
-                }
-            }
+        override suspend fun removePhoto(photo: Photo) = photoDao.delete(photo)
 
         override fun getPhotosForAlbum(albumId: Long): Flow<List<Photo>> = photoDao.getByAlbumId(albumId)
 
