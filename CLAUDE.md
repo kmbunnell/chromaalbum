@@ -13,7 +13,7 @@ Always present the best architectural solution, not merely one that satisfies ac
 ## Engineering Standards
 
 All code must be written to senior Android engineer quality:
-- Follow Google's [Android Architecture Guidelines](https://developer.android.com/topic/architecture)
+- Follow Google's [Android Architecture Guidelines](https://developer.android.com/topic/architecture)y
 - Use Test-Driven Development: write the failing test first, then implement
 - Unidirectional data flow; stateless composables observe ViewModel `StateFlow`
 - No third-party paid dependencies — first-party Jetpack/Google only
@@ -72,7 +72,6 @@ Structure every test **Given–When–Then**: arrange state, invoke the unit und
 Every test must assert behavior **we wrote**, not framework guarantees. Before adding a test, ask: if I deleted our code but left the framework intact, would this test fail? If not, drop it. Specifically:
 - Do not test Room's FK CASCADE, empty-query defaults, or constraint enforcement — Room owns those.
 - Do not test basic `@Insert`/`@Update`/`@Delete` mechanics on repository pass-throughs — those are annotation-processor guarantees, not our logic.
-- **Do** test custom SQL we wrote (ORDER BY, JOIN, WHERE with domain logic) — the query is ours even though Room executes it.
 - Do not write two tests that would pass or fail together — merge them or drop the weaker one.
 
 

@@ -19,10 +19,7 @@ interface AlbumRepository {
 
     suspend fun deleteAlbum(album: Album)
 
-    suspend fun addPhotos(
-        albumId: Long,
-        uris: List<String>,
-    )
+    suspend fun addPhotos(photos: List<Photo>)
 
     suspend fun removePhoto(photo: Photo)
 
