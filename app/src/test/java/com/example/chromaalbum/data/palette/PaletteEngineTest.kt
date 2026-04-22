@@ -20,6 +20,7 @@ import java.io.IOException
 @OptIn(ExperimentalCoroutinesApi::class)
 @Config(sdk = [35])
 @RunWith(RobolectricTestRunner::class)
+
 class PaletteEngineTest {
     private val dispatcher = UnconfinedTestDispatcher()
     private val stubPhotoLoader = object : PhotoLoader {

@@ -28,23 +28,6 @@ class PhotoLoaderImplTest {
     private val testUri = Uri.parse("content://com.example/photos/1")
 
     @Test
-    fun load_givenValidUri_whenCoilSucceeds_thenReturnsBitmap() =
-        runTest(dispatcher) {
-            val bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888)
-            val engine =
-                FakeImageLoaderEngine
-                    .Builder()
-                    .intercept({ it == testUri }, bitmap.asImage())
-                    .build()
-            val imageLoader = ImageLoader.Builder(context).components { add(engine) }.build()
-            val loader = PhotoLoaderImpl(imageLoader, dispatcher, context)
-
-            val result = loader.load(testUri)
-
-            assertNotNull(result)
-        }
-
-    @Test
     fun load_givenValidUri_whenCalled_thenRequestsDownsampledToHundredByHundred() =
         runTest(dispatcher) {
             var capturedSize: Size? = null

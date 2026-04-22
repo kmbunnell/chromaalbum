@@ -10,12 +10,12 @@ import com.example.chromaalbum.domain.model.BlendedPalette
 import com.example.chromaalbum.domain.model.SwatchData
 import com.example.chromaalbum.domain.palette.PaletteEngine
 import com.example.chromaalbum.domain.palette.PhotoLoader
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.math.pow
 import kotlin.math.roundToInt
-import kotlinx.coroutines.CancellationException
 
 class PaletteEngineImpl
     @Inject
@@ -33,18 +33,19 @@ class PaletteEngineImpl
 
         override suspend fun blendPalettes(uris: List<Uri>): BlendedPalette? =
             withContext(dispatcher) {
-                val palettes = uris.mapNotNull { uri ->
-                    try {
-                        val bitmap = photoLoader.load(uri)
-                        val palette = extractRawPalette(bitmap)
-                        bitmap.recycle()
-                        palette
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (_: Exception) {
-                        null
+                val palettes =
+                    uris.mapNotNull { uri ->
+                        try {
+                            val bitmap = photoLoader.load(uri)
+                            val palette = extractRawPalette(bitmap)
+                            bitmap.recycle()
+                            palette
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (_: Exception) {
+                            null
+                        }
                     }
-                }
                 if (palettes.isEmpty()) return@withContext null
 
                 BlendedPalette(

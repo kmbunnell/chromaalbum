@@ -6,5 +6,6 @@ import com.example.chromaalbum.domain.model.BlendedPalette
 
 interface PaletteEngine {
     suspend fun extractPalette(bitmap: Bitmap): BlendedPalette
+
     suspend fun blendPalettes(uris: List<Uri>): BlendedPalette?
 }

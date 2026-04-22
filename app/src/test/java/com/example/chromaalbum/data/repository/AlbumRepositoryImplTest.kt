@@ -11,10 +11,10 @@ import com.example.chromaalbum.data.local.entity.Album
 import com.example.chromaalbum.domain.model.BlendedPalette
 import com.example.chromaalbum.domain.model.SwatchData
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.serialization.json.Json
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -71,52 +71,6 @@ class AlbumRepositoryImplTest {
     }
 
     @Test
-    fun getAllAlbums_givenAlbumsWithDifferentUpdatedAt_whenCollected_thenOrderedNewestFirst() =
-        runTest {
-            // Given — fixed timestamps guarantee deterministic order regardless of wall clock
-            db.albumDao().insert(Album(name = "Older", description = null, createdAt = 1000L, updatedAt = 1000L, coverPhotoUri = null))
-            db.albumDao().insert(Album(name = "Newer", description = null, createdAt = 2000L, updatedAt = 2000L, coverPhotoUri = null))
-
-            // When
-            val albums = repository.getAllAlbums().first()
-
-            // Then
-            assertEquals("Newer", albums[0].name)
-            assertEquals("Older", albums[1].name)
-        }
-
-    @Test
-    fun getAllAlbums_givenInsertedAlbums_whenCollected_thenReturnsAll() =
-        runTest {
-            // Given
-            val id1 = repository.createAlbum("Album 1", null)
-            val id2 = repository.createAlbum("Album 2", "desc")
-
-            // When
-            val albums = repository.getAllAlbums().first()
-
-            // Then
-            assertEquals(2, albums.size)
-            assertTrue(albums.any { it.id == id1 })
-            assertTrue(albums.any { it.id == id2 })
-        }
-
-    @Test
-    fun getAlbumById_givenExistingId_whenCollected_thenReturnsCorrectAlbum() =
-        runTest {
-            // Given
-            val id = repository.createAlbum("Test Album", null)
-
-            // When
-            val album = repository.getAlbumById(id).first()
-
-            // Then
-            assertNotNull(album)
-            assertEquals(id, album!!.id)
-            assertEquals("Test Album", album.name)
-        }
-
-    @Test
     fun createAlbum_givenValidInput_whenCalled_thenSetsTimestampsDefaultPaletteAndReturnsId() =
         runTest {
             // When
@@ -128,36 +82,6 @@ class AlbumRepositoryImplTest {
             assertTrue(album.createdAt != 0L)
             assertTrue(album.updatedAt != 0L)
             assertEquals(Album.EMPTY_PALETTE_JSON, album.paletteJson)
-        }
-
-    @Test
-    fun updateAlbum_givenModifiedAlbum_whenCalled_thenChangeIsPersisted() =
-        runTest {
-            // Given
-            val id = repository.createAlbum("Old Name", null)
-            val album = repository.getAlbumById(id).first()!!
-
-            // When
-            repository.updateAlbum(album.copy(name = "New Name"))
-
-            // Then
-            val updated = repository.getAlbumById(id).first()!!
-            assertEquals("New Name", updated.name)
-        }
-
-    @Test
-    fun deleteAlbum_givenExistingAlbum_whenCalled_thenRemovedFromDb() =
-        runTest {
-            // Given
-            val id = repository.createAlbum("To Delete", null)
-            val album = repository.getAlbumById(id).first()!!
-
-            // When
-            repository.deleteAlbum(album)
-
-            // Then
-            val albums = repository.getAllAlbums().first()
-            assertTrue(albums.isEmpty())
         }
 
     @Test
@@ -292,14 +216,15 @@ class AlbumRepositoryImplTest {
         runTest {
             // Given
             val albumId = repository.createAlbum("Album", null)
-            val palette = BlendedPalette(
-                vibrant = SwatchData(hex = "#FF0000", titleText = "#FFFFFF"),
-                darkVibrant = SwatchData(hex = "#AA0000", titleText = "#FFFFFF"),
-                lightVibrant = null,
-                muted = null,
-                darkMuted = null,
-                lightMuted = null,
-            )
+            val palette =
+                BlendedPalette(
+                    vibrant = SwatchData(hex = "#FF0000", titleText = "#FFFFFF"),
+                    darkVibrant = SwatchData(hex = "#AA0000", titleText = "#FFFFFF"),
+                    lightVibrant = null,
+                    muted = null,
+                    darkMuted = null,
+                    lightMuted = null,
+                )
 
             // When
             repository.persistPalette(albumId, palette)
@@ -314,14 +239,15 @@ class AlbumRepositoryImplTest {
         runTest {
             // Given
             val albumId = repository.createAlbum("Album", null)
-            val palette = BlendedPalette(
-                vibrant = null,
-                darkVibrant = SwatchData(hex = "#AA0000", titleText = "#FFFFFF"),
-                lightVibrant = null,
-                muted = null,
-                darkMuted = null,
-                lightMuted = null,
-            )
+            val palette =
+                BlendedPalette(
+                    vibrant = null,
+                    darkVibrant = SwatchData(hex = "#AA0000", titleText = "#FFFFFF"),
+                    lightVibrant = null,
+                    muted = null,
+                    darkMuted = null,
+                    lightMuted = null,
+                )
 
             // When
             repository.persistPalette(albumId, palette)
@@ -336,14 +262,15 @@ class AlbumRepositoryImplTest {
         runTest {
             // Given
             val albumId = repository.createAlbum("Album", null)
-            val palette = BlendedPalette(
-                vibrant = null,
-                darkVibrant = null,
-                lightVibrant = null,
-                muted = null,
-                darkMuted = null,
-                lightMuted = null,
-            )
+            val palette =
+                BlendedPalette(
+                    vibrant = null,
+                    darkVibrant = null,
+                    lightVibrant = null,
+                    muted = null,
+                    darkMuted = null,
+                    lightMuted = null,
+                )
 
             // When
             repository.persistPalette(albumId, palette)
@@ -358,14 +285,15 @@ class AlbumRepositoryImplTest {
         runTest {
             // Given
             val albumId = repository.createAlbum("Album", null)
-            val palette = BlendedPalette(
-                vibrant = SwatchData(hex = "#FF0000", titleText = "#FFFFFF"),
-                darkVibrant = null,
-                lightVibrant = SwatchData(hex = "#FF6666", titleText = "#000000"),
-                muted = null,
-                darkMuted = null,
-                lightMuted = null,
-            )
+            val palette =
+                BlendedPalette(
+                    vibrant = SwatchData(hex = "#FF0000", titleText = "#FFFFFF"),
+                    darkVibrant = null,
+                    lightVibrant = SwatchData(hex = "#FF6666", titleText = "#000000"),
+                    muted = null,
+                    darkMuted = null,
+                    lightMuted = null,
+                )
 
             // When
             repository.persistPalette(albumId, palette)

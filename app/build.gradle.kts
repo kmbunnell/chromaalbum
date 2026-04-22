@@ -55,6 +55,7 @@ ksp {
 spotless {
     kotlin {
         target("src/**/*.kt")
+        targetExclude("src/test/**/*.kt", "src/androidTest/**/*.kt")
         ktlint()
     }
     kotlinGradle {
