@@ -10,12 +10,14 @@ import com.example.chromaalbum.data.mapper.toDomain
 import com.example.chromaalbum.data.mapper.toEntity
 import com.example.chromaalbum.di.IoDispatcher
 import com.example.chromaalbum.domain.model.Album
+import com.example.chromaalbum.domain.model.BlendedPalette
 import com.example.chromaalbum.domain.model.Photo
 import com.example.chromaalbum.domain.repository.AlbumRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
 class AlbumRepositoryImpl
@@ -73,6 +75,15 @@ class AlbumRepositoryImpl
 
         override fun getPhotosForAlbum(albumId: Long): Flow<List<Photo>> =
             photoDao.getByAlbumId(albumId).map { list -> list.map { it.toDomain() } }
+
+        override suspend fun persistPalette(
+            albumId: Long,
+            palette: BlendedPalette,
+        ) {
+            withContext(ioDispatcher) {
+                albumDao.updatePaletteJson(albumId, Json.encodeToString(palette), System.currentTimeMillis())
+            }
+        }
 
         private fun releaseAll(uris: List<Uri>) {
             uris.forEach {

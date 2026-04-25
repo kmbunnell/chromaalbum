@@ -1,6 +1,7 @@
 package com.example.chromaalbum.domain.repository
 
 import com.example.chromaalbum.domain.model.Album
+import com.example.chromaalbum.domain.model.BlendedPalette
 import com.example.chromaalbum.domain.model.Photo
 import kotlinx.coroutines.flow.Flow
 
@@ -23,4 +24,9 @@ interface AlbumRepository {
     suspend fun removePhoto(photo: Photo)
 
     fun getPhotosForAlbum(albumId: Long): Flow<List<Photo>>
+
+    suspend fun persistPalette(
+        albumId: Long,
+        palette: BlendedPalette,
+    )
 }
