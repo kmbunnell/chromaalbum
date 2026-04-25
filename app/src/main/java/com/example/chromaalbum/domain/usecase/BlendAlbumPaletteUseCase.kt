@@ -98,5 +98,4 @@ class BlendAlbumPaletteUseCase
                 )
             return if (merged.isEmpty()) null else merged
         }
-
     }

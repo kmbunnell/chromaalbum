@@ -110,5 +110,7 @@ class AddPhotosUseCaseTest {
         override suspend fun deleteAlbum(album: Album): Unit = error("unused")
 
         override suspend fun removePhoto(photo: Photo): Unit = error("unused")
+
+        override suspend fun persistPalette(albumId: Long, palette: com.example.chromaalbum.domain.model.BlendedPalette): Unit = error("unused")
     }
 }

@@ -27,4 +27,11 @@ interface AlbumDao {
 
     @Delete
     suspend fun delete(album: AlbumEntity)
+
+    @Query("UPDATE albums SET paletteJson = :paletteJson, updatedAt = :updatedAt WHERE id = :albumId")
+    suspend fun updatePaletteJson(
+        albumId: Long,
+        paletteJson: String,
+        updatedAt: Long,
+    )
 }

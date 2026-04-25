@@ -219,6 +219,38 @@ class AlbumRepositoryImplTest {
             assertEquals(palette, updated.palette)
         }
 
+    @Test
+    fun persistPalette_givenValidAlbum_whenCalled_thenPaletteJsonIsUpdatedInRoom() =
+        runTest {
+            val albumId = repository.createAlbum("Album", null)
+            val palette =
+                BlendedPalette(
+                    vibrant = SwatchData(hex = "#1A2B3C", titleText = "#FFFFFF"),
+                    darkVibrant = SwatchData(hex = "#0A1B2C", titleText = "#FFFFFF"),
+                    lightVibrant = null,
+                    muted = null,
+                    darkMuted = null,
+                    lightMuted = null,
+                )
+
+            repository.persistPalette(albumId, palette)
+
+            val updated = repository.getAlbumById(albumId).first()!!
+            assertEquals(palette, updated.palette)
+        }
+
+    @Test
+    fun persistPalette_givenValidAlbum_whenCalled_thenUpdatedAtIsRefreshed() =
+        runTest {
+            val albumId = repository.createAlbum("Album", null)
+            val before = repository.getAlbumById(albumId).first()!!.updatedAt
+
+            repository.persistPalette(albumId, BlendedPalette())
+
+            val after = repository.getAlbumById(albumId).first()!!.updatedAt
+            assertTrue(after >= before)
+        }
+
     private fun photos(albumId: Long, uris: List<String>): List<Photo> =
         uris.mapIndexed { i, uri -> Photo(albumId = albumId, uri = uri, addedAt = 0L, sortOrder = i) }
 }
