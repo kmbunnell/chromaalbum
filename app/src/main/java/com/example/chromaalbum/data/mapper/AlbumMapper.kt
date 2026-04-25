@@ -2,7 +2,7 @@ package com.example.chromaalbum.data.mapper
 
 import com.example.chromaalbum.data.local.entity.AlbumEntity
 import com.example.chromaalbum.domain.model.Album
-import kotlinx.serialization.json.Json
+import com.example.chromaalbum.domain.model.BlendedPalette
 
 fun AlbumEntity.toDomain(): Album =
     Album(
@@ -13,7 +13,7 @@ fun AlbumEntity.toDomain(): Album =
         updatedAt = updatedAt,
         coverPhotoUri = coverPhotoUri,
         dominantColor = dominantColor,
-        palette = Json.decodeFromString(paletteJson),
+        palette = BlendedPalette.fromJson(paletteJson) ?: BlendedPalette(),
     )
 
 fun Album.toEntity(): AlbumEntity =
@@ -25,5 +25,5 @@ fun Album.toEntity(): AlbumEntity =
         updatedAt = updatedAt,
         coverPhotoUri = coverPhotoUri,
         dominantColor = palette.dominantHex(),
-        paletteJson = Json.encodeToString(palette),
+        paletteJson = palette.toJson(),
     )

@@ -1,6 +1,7 @@
 package com.example.chromaalbum.domain.usecase
 
 import android.net.Uri
+import androidx.core.net.toUri
 import com.example.chromaalbum.di.DefaultDispatcher
 import com.example.chromaalbum.domain.model.BlendedPalette
 import com.example.chromaalbum.domain.repository.AlbumRepository
@@ -13,7 +14,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
 import javax.inject.Inject
-import androidx.core.net.toUri
 
 class AutoRegeneratePaletteUseCase(
     private val repository: AlbumRepository,
