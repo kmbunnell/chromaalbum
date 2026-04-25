@@ -3,19 +3,23 @@ package com.example.chromaalbum.domain.usecase
 import android.graphics.Bitmap
 import android.net.Uri
 import com.example.chromaalbum.domain.model.BlendedPalette
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 import com.example.chromaalbum.domain.model.SwatchData
 import com.example.chromaalbum.domain.palette.PaletteCompleter
 import com.example.chromaalbum.domain.palette.PaletteEngine
 import com.example.chromaalbum.domain.palette.PhotoLoader
+import java.io.IOException
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.IOException
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 @Config(sdk = [35])
 @RunWith(RobolectricTestRunner::class)
@@ -92,12 +96,12 @@ class BlendAlbumPaletteUseCaseTest {
     @Test
     fun invoke_givenMoreThan50Uris_thenSamples50EvenlySpaced() =
         runTest {
-            val uris = (0..59).map { Uri.parse("content://$it") }
-            var bitmapsReceived = 0
+            val uris = (0..119).map { Uri.parse("content://$it") }
+            var totalBitmapsReceived = 0
             val countingEngine = object : PaletteEngine {
                 override suspend fun extractPalette(bitmap: Bitmap) = blendedPalette
                 override suspend fun blendPalettes(bitmaps: List<Bitmap>): BlendedPalette? {
-                    bitmapsReceived = bitmaps.size
+                    totalBitmapsReceived += bitmaps.size
                     return blendedPalette
                 }
             }
@@ -105,7 +109,102 @@ class BlendAlbumPaletteUseCaseTest {
 
             useCase(uris)
 
-            assertEquals(50, bitmapsReceived)
+            assertEquals(50, totalBitmapsReceived)
+        }
+
+    @Test
+    fun invoke_given30Uris_thenAll30AreProcessed() =
+        runTest {
+            val uris = (0..29).map { Uri.parse("content://$it") }
+            var totalBitmapsReceived = 0
+            val countingEngine = object : PaletteEngine {
+                override suspend fun extractPalette(bitmap: Bitmap) = blendedPalette
+                override suspend fun blendPalettes(bitmaps: List<Bitmap>): BlendedPalette? {
+                    totalBitmapsReceived += bitmaps.size
+                    return blendedPalette
+                }
+            }
+            val useCase = BlendAlbumPaletteUseCase(successLoader, countingEngine, completer)
+
+            useCase(uris)
+
+            assertEquals(30, totalBitmapsReceived)
+        }
+
+    @Test
+    fun invoke_given11Uris_thenEngineCalledInTwoBatches() =
+        runTest {
+            val uris = (0..10).map { Uri.parse("content://$it") }
+            var blendCallCount = 0
+            val countingEngine = object : PaletteEngine {
+                override suspend fun extractPalette(bitmap: Bitmap) = blendedPalette
+                override suspend fun blendPalettes(bitmaps: List<Bitmap>): BlendedPalette? {
+                    blendCallCount++
+                    return blendedPalette
+                }
+            }
+            val useCase = BlendAlbumPaletteUseCase(successLoader, countingEngine, completer)
+
+            useCase(uris)
+
+            assertEquals(2, blendCallCount)
+        }
+
+    @Test
+    fun invoke_givenScopeCancelledAfterFirstBatch_thenThrowsCancellationException() =
+        runTest {
+            var loadCount = 0
+            val blockingLoader = object : PhotoLoader {
+                override suspend fun load(uri: Uri): Bitmap {
+                    loadCount++
+                    if (loadCount > 10) suspendCancellableCoroutine<Unit> { }
+                    return stubBitmap
+                }
+            }
+            val uris = (0..10).map { Uri.parse("content://$it") }
+            val deferred = async {
+                BlendAlbumPaletteUseCase(blockingLoader, engine, completer)(uris)
+            }
+
+            testScheduler.advanceUntilIdle()
+            deferred.cancel()
+
+            var caughtCancellation = false
+            try {
+                deferred.await()
+            } catch (e: CancellationException) {
+                caughtCancellation = true
+            }
+            assertTrue(caughtCancellation)
+        }
+
+    @Test
+    fun invoke_givenTwoBatchesWithDistinctColors_thenMergedHexIsAverageOfBatchColors() =
+        runTest {
+            val batch1Palette = BlendedPalette(
+                vibrant = SwatchData("#FF0000", "#FFFFFF"),
+                darkVibrant = null, lightVibrant = null, muted = null, darkMuted = null, lightMuted = null,
+            )
+            val batch2Palette = BlendedPalette(
+                vibrant = SwatchData("#0000FF", "#FFFFFF"),
+                darkVibrant = null, lightVibrant = null, muted = null, darkMuted = null, lightMuted = null,
+            )
+            var callCount = 0
+            val varyingEngine = object : PaletteEngine {
+                override suspend fun extractPalette(bitmap: Bitmap) = blendedPalette
+                override suspend fun blendPalettes(bitmaps: List<Bitmap>): BlendedPalette? =
+                    if (callCount++ == 0) batch1Palette else batch2Palette
+            }
+            val passThroughCompleter = object : PaletteCompleter {
+                override fun complete(palette: BlendedPalette) = palette
+            }
+            val uris = (0..10).map { Uri.parse("content://$it") }
+            val useCase = BlendAlbumPaletteUseCase(successLoader, varyingEngine, passThroughCompleter)
+
+            val result = useCase(uris)
+
+            assertEquals("#800080", result?.vibrant?.hex)
+            assertEquals("#FFFFFF", result?.vibrant?.titleText)
         }
 
     @Test
