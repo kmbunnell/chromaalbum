@@ -9,7 +9,7 @@ import androidx.room.PrimaryKey
     tableName = "photos",
     foreignKeys = [
         ForeignKey(
-            entity = Album::class,
+            entity = AlbumEntity::class,
             parentColumns = ["id"],
             childColumns = ["albumId"],
             onDelete = ForeignKey.CASCADE,
@@ -17,7 +17,7 @@ import androidx.room.PrimaryKey
     ],
     indices = [Index("albumId")],
 )
-data class Photo(
+data class PhotoEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val albumId: Long,
