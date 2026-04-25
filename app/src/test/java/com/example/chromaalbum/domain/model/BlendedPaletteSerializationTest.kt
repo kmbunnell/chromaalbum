@@ -4,6 +4,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class BlendedPaletteSerializationTest {
@@ -20,7 +21,7 @@ class BlendedPaletteSerializationTest {
     @Test
     fun toJson_givenFullPalette_whenCalled_thenJsonContainsSixSwatchKeysWithHexAndTitleText() {
         // When
-        val json = Json.encodeToString(fullPalette)
+        val json = fullPalette.toJson()
         val root = Json.parseToJsonElement(json).jsonObject
 
         // Then
@@ -48,9 +49,45 @@ class BlendedPaletteSerializationTest {
             )
 
         // When
-        val result = Json.decodeFromString<BlendedPalette>(Json.encodeToString(palette))
+        val result = BlendedPalette.fromJson(palette.toJson())
 
         // Then
         assertEquals(palette, result)
+    }
+
+    @Test
+    fun fromJson_toJson_givenFullPalette_whenRoundTripped_thenProducesIdenticalInstance() {
+        // When
+        val result = BlendedPalette.fromJson(fullPalette.toJson())
+
+        // Then
+        assertEquals(fullPalette, result)
+    }
+
+    @Test
+    fun fromJson_givenMalformedJson_whenCalled_thenReturnsNull() {
+        // When
+        val result = BlendedPalette.fromJson("{not valid}")
+
+        // Then
+        assertNull(result)
+    }
+
+    @Test
+    fun fromJson_givenEmptyString_whenCalled_thenReturnsNull() {
+        // When
+        val result = BlendedPalette.fromJson("")
+
+        // Then
+        assertNull(result)
+    }
+
+    @Test
+    fun fromJson_givenEmptyJsonObject_whenCalled_thenReturnsPaletteWithAllNullSwatches() {
+        // When
+        val result = BlendedPalette.fromJson("{}")
+
+        // Then
+        assertEquals(BlendedPalette(), result)
     }
 }
