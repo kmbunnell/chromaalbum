@@ -23,6 +23,7 @@ All code must be written to senior Android engineer quality:
 - Never swallow `CancellationException` in coroutines. When a `catch (e: Exception)` block handles an error without rethrowing, precede it with `catch (e: CancellationException) { throw e }`. If the catch block unconditionally rethrows (e.g. cleanup then `throw e`), the separate CE guard is redundant — a single `catch (e: Exception)` suffices since CE is rethrown with everything else. Avoid `runCatching { }.getOrNull()` for the same reason.
 - Do not create new packages or directories without asking first.
 - Do not manually construct class instances in Compose screens — always inject
+- Comments: do not restate what the code already says. Only comment when the WHY or algorithm is non-obvious. Public API functions with non-trivial behavior may use multi-line KDoc; inline comments must be one line.
 
 ## Commands
 
