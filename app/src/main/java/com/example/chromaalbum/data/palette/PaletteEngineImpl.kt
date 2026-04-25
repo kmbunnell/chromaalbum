@@ -8,10 +8,10 @@ import com.example.chromaalbum.di.DefaultDispatcher
 import com.example.chromaalbum.domain.model.BlendedPalette
 import com.example.chromaalbum.domain.model.SwatchData
 import com.example.chromaalbum.domain.palette.PaletteEngine
+import com.example.chromaalbum.domain.palette.linearise
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
-import kotlin.math.pow
 import kotlin.math.roundToInt
 
 class PaletteEngineImpl
@@ -72,8 +72,6 @@ class PaletteEngineImpl
                 lightMuted = palette.lightMutedSwatch?.toSwatchData(),
             )
     }
-
-private fun linearise(c: Double) = if (c <= 0.04045) c / 12.92 else ((c + 0.055) / 1.055).pow(2.4)
 
 private fun Palette.Swatch.toSwatchData() =
     SwatchData(
