@@ -1,6 +1,6 @@
 package com.example.chromaalbum.domain.usecase
 
-import com.example.chromaalbum.data.local.entity.Photo
+import com.example.chromaalbum.domain.model.Photo
 import com.example.chromaalbum.domain.repository.AlbumRepository
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject

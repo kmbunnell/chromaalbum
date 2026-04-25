@@ -13,7 +13,7 @@ Always present the best architectural solution, not merely one that satisfies ac
 ## Engineering Standards
 
 All code must be written to senior Android engineer quality:
-- Follow Google's [Android Architecture Guidelines](https://developer.android.com/topic/architecture)y
+- Follow Google's [Android Architecture Guidelines](https://developer.android.com/topic/architecture)
 - Use Test-Driven Development: write the failing test first, then implement
 - Unidirectional data flow; stateless composables observe ViewModel `StateFlow`
 - No third-party paid dependencies — first-party Jetpack/Google only

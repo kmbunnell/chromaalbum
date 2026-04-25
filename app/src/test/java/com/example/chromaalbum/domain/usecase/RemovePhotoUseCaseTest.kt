@@ -1,8 +1,7 @@
 package com.example.chromaalbum.domain.usecase
 
-import com.example.chromaalbum.data.local.entity.Album
-import com.example.chromaalbum.data.local.entity.Photo
-import com.example.chromaalbum.domain.model.BlendedPalette
+import com.example.chromaalbum.domain.model.Album
+import com.example.chromaalbum.domain.model.Photo
 import com.example.chromaalbum.domain.repository.AlbumRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -96,7 +95,5 @@ class RemovePhotoUseCaseTest {
         override suspend fun deleteAlbum(album: Album): Unit = error("unused")
 
         override suspend fun addPhotos(photos: List<Photo>): Unit = error("unused")
-
-        override suspend fun persistPalette(albumId: Long, palette: BlendedPalette): Unit = error("unused")
     }
 }

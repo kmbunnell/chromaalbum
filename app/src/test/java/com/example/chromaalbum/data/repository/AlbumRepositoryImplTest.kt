@@ -7,15 +7,13 @@ import androidx.test.core.app.ApplicationProvider
 import com.example.chromaalbum.data.helper.UriNotPersistableException
 import com.example.chromaalbum.data.helper.UriPersistenceHelper
 import com.example.chromaalbum.data.local.ChromaAlbumDatabase
-import com.example.chromaalbum.data.local.entity.Album
-import com.example.chromaalbum.data.local.entity.Photo
 import com.example.chromaalbum.domain.model.BlendedPalette
+import com.example.chromaalbum.domain.model.Photo
 import com.example.chromaalbum.domain.model.SwatchData
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
-import kotlinx.serialization.json.Json
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -80,7 +78,7 @@ class AlbumRepositoryImplTest {
             val album = repository.getAlbumById(id).first()!!
             assertTrue(album.createdAt != 0L)
             assertTrue(album.updatedAt != 0L)
-            assertEquals(Album.EMPTY_PALETTE_JSON, album.paletteJson)
+            assertEquals(BlendedPalette(), album.palette)
         }
 
     @Test
@@ -147,7 +145,7 @@ class AlbumRepositoryImplTest {
         }
 
     @Test
-    fun persistPalette_givenPaletteWithVibrant_whenCalled_thenDominantColorIsVibrantHex() =
+    fun updateAlbum_givenPaletteWithVibrant_whenCalled_thenDominantColorIsVibrantHex() =
         runTest {
             val albumId = repository.createAlbum("Album", null)
             val palette =
@@ -159,15 +157,16 @@ class AlbumRepositoryImplTest {
                     darkMuted = null,
                     lightMuted = null,
                 )
-
-            repository.persistPalette(albumId, palette)
-
             val album = repository.getAlbumById(albumId).first()!!
-            assertEquals(palette.vibrant!!.hex, album.dominantColor)
+
+            repository.updateAlbum(album.copy(palette = palette))
+
+            val updated = repository.getAlbumById(albumId).first()!!
+            assertEquals(palette.vibrant!!.hex, updated.dominantColor)
         }
 
     @Test
-    fun persistPalette_givenPaletteWithNullVibrant_whenCalled_thenDominantColorIsFirstNonNullSwatchHex() =
+    fun updateAlbum_givenPaletteWithNullVibrant_whenCalled_thenDominantColorIsFirstNonNullSwatchHex() =
         runTest {
             val albumId = repository.createAlbum("Album", null)
             val palette =
@@ -179,35 +178,28 @@ class AlbumRepositoryImplTest {
                     darkMuted = null,
                     lightMuted = null,
                 )
-
-            repository.persistPalette(albumId, palette)
-
             val album = repository.getAlbumById(albumId).first()!!
-            assertEquals(palette.darkVibrant!!.hex, album.dominantColor)
+
+            repository.updateAlbum(album.copy(palette = palette))
+
+            val updated = repository.getAlbumById(albumId).first()!!
+            assertEquals(palette.darkVibrant!!.hex, updated.dominantColor)
         }
 
     @Test
-    fun persistPalette_givenAllNullSwatches_whenCalled_thenDominantColorIsNull() =
+    fun updateAlbum_givenAllNullSwatches_whenCalled_thenDominantColorIsNull() =
         runTest {
             val albumId = repository.createAlbum("Album", null)
-            val palette =
-                BlendedPalette(
-                    vibrant = null,
-                    darkVibrant = null,
-                    lightVibrant = null,
-                    muted = null,
-                    darkMuted = null,
-                    lightMuted = null,
-                )
-
-            repository.persistPalette(albumId, palette)
-
             val album = repository.getAlbumById(albumId).first()!!
-            assertNull(album.dominantColor)
+
+            repository.updateAlbum(album.copy(palette = BlendedPalette()))
+
+            val updated = repository.getAlbumById(albumId).first()!!
+            assertNull(updated.dominantColor)
         }
 
     @Test
-    fun persistPalette_givenPalette_whenCalled_thenPaletteJsonRoundTripsFromDb() =
+    fun updateAlbum_givenPalette_whenCalled_thenPaletteRoundTripsFromDb() =
         runTest {
             val albumId = repository.createAlbum("Album", null)
             val palette =
@@ -219,11 +211,12 @@ class AlbumRepositoryImplTest {
                     darkMuted = null,
                     lightMuted = null,
                 )
-
-            repository.persistPalette(albumId, palette)
-
             val album = repository.getAlbumById(albumId).first()!!
-            assertEquals(palette, Json.decodeFromString<BlendedPalette>(album.paletteJson))
+
+            repository.updateAlbum(album.copy(palette = palette))
+
+            val updated = repository.getAlbumById(albumId).first()!!
+            assertEquals(palette, updated.palette)
         }
 
     private fun photos(albumId: Long, uris: List<String>): List<Photo> =

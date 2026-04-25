@@ -5,15 +5,17 @@ import androidx.core.net.toUri
 import com.example.chromaalbum.data.helper.UriPersistenceHelper
 import com.example.chromaalbum.data.local.dao.AlbumDao
 import com.example.chromaalbum.data.local.dao.PhotoDao
-import com.example.chromaalbum.data.local.entity.Album
-import com.example.chromaalbum.data.local.entity.Photo
+import com.example.chromaalbum.data.local.entity.AlbumEntity
+import com.example.chromaalbum.data.mapper.toDomain
+import com.example.chromaalbum.data.mapper.toEntity
 import com.example.chromaalbum.di.IoDispatcher
-import com.example.chromaalbum.domain.model.BlendedPalette
+import com.example.chromaalbum.domain.model.Album
+import com.example.chromaalbum.domain.model.Photo
 import com.example.chromaalbum.domain.repository.AlbumRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
 class AlbumRepositoryImpl
@@ -24,9 +26,9 @@ class AlbumRepositoryImpl
         private val uriPersistenceHelper: UriPersistenceHelper,
         @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) : AlbumRepository {
-        override fun getAllAlbums(): Flow<List<Album>> = albumDao.getAll()
+        override fun getAllAlbums(): Flow<List<Album>> = albumDao.getAll().map { list -> list.map { it.toDomain() } }
 
-        override fun getAlbumById(albumId: Long): Flow<Album?> = albumDao.getById(albumId)
+        override fun getAlbumById(albumId: Long): Flow<Album?> = albumDao.getById(albumId).map { it?.toDomain() }
 
         override suspend fun createAlbum(
             name: String,
@@ -34,20 +36,20 @@ class AlbumRepositoryImpl
         ): Long {
             val now = System.currentTimeMillis()
             return albumDao.insert(
-                Album(
+                AlbumEntity(
                     name = name,
                     description = description,
                     createdAt = now,
                     updatedAt = now,
                     coverPhotoUri = null,
-                    paletteJson = Album.EMPTY_PALETTE_JSON,
+                    paletteJson = AlbumEntity.EMPTY_PALETTE_JSON,
                 ),
             )
         }
 
-        override suspend fun updateAlbum(album: Album) = albumDao.update(album)
+        override suspend fun updateAlbum(album: Album) = albumDao.update(album.copy(updatedAt = System.currentTimeMillis()).toEntity())
 
-        override suspend fun deleteAlbum(album: Album) = albumDao.delete(album)
+        override suspend fun deleteAlbum(album: Album) = albumDao.delete(album.toEntity())
 
         override suspend fun addPhotos(photos: List<Photo>) {
             if (photos.isEmpty()) return
@@ -59,7 +61,7 @@ class AlbumRepositoryImpl
                         uriPersistenceHelper.persist(uri)
                         persisted += uri
                     }
-                    photoDao.insertAll(photos)
+                    photoDao.insertAll(photos.map { it.toEntity() })
                 } catch (e: Exception) {
                     releaseAll(persisted)
                     throw e
@@ -67,21 +69,10 @@ class AlbumRepositoryImpl
             }
         }
 
-        override suspend fun removePhoto(photo: Photo) = photoDao.delete(photo)
+        override suspend fun removePhoto(photo: Photo) = photoDao.delete(photo.toEntity())
 
-        override fun getPhotosForAlbum(albumId: Long): Flow<List<Photo>> = photoDao.getByAlbumId(albumId)
-
-        override suspend fun persistPalette(
-            albumId: Long,
-            palette: BlendedPalette,
-        ) {
-            albumDao.updatePalette(
-                albumId,
-                palette.dominantHex(),
-                Json.encodeToString(palette),
-                System.currentTimeMillis(),
-            )
-        }
+        override fun getPhotosForAlbum(albumId: Long): Flow<List<Photo>> =
+            photoDao.getByAlbumId(albumId).map { list -> list.map { it.toDomain() } }
 
         private fun releaseAll(uris: List<Uri>) {
             uris.forEach {

@@ -4,13 +4,13 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
-import com.example.chromaalbum.data.local.entity.Photo
+import com.example.chromaalbum.data.local.entity.PhotoEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PhotoDao {
     @Query("SELECT * FROM photos WHERE albumId = :albumId ORDER BY sortOrder ASC")
-    fun getByAlbumId(albumId: Long): Flow<List<Photo>>
+    fun getByAlbumId(albumId: Long): Flow<List<PhotoEntity>>
 
     @Query("SELECT COUNT(*) FROM photos WHERE albumId = :albumId")
     fun getPhotoCount(albumId: Long): Flow<Int>
@@ -19,16 +19,16 @@ interface PhotoDao {
     suspend fun getCountOnce(albumId: Long): Int
 
     @Query("SELECT * FROM photos WHERE albumId = :albumId ORDER BY sortOrder ASC LIMIT 1")
-    suspend fun getFirstPhotoOnce(albumId: Long): Photo?
+    suspend fun getFirstPhotoOnce(albumId: Long): PhotoEntity?
 
     @Insert
-    suspend fun insert(photo: Photo): Long
+    suspend fun insert(photo: PhotoEntity): Long
 
     @Insert
-    suspend fun insertAll(photos: List<Photo>)
+    suspend fun insertAll(photos: List<PhotoEntity>)
 
     @Delete
-    suspend fun delete(photo: Photo)
+    suspend fun delete(photo: PhotoEntity)
 
     @Query("UPDATE photos SET sortOrder = :sortOrder WHERE id = :photoId")
     suspend fun updateSortOrder(
