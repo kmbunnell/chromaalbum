@@ -99,6 +99,73 @@ class ColorSchemeMapperTest {
         assertEquals(expected, result.primaryContainer)
     }
 
+    @Test
+    fun mapToDarkColorScheme_givenNullPalette_whenCalled_thenReturnsDarkDefault() {
+        val result = mapToDarkColorScheme(null)
+
+        assertEquals(DefaultColorSchemes.darkDefault, result)
+    }
+
+    @Test
+    fun mapToDarkColorScheme_givenAllNullSwatches_whenCalled_thenReturnsDarkDefault() {
+        val result = mapToDarkColorScheme(BlendedPalette())
+
+        assertEquals(DefaultColorSchemes.darkDefault, result)
+    }
+
+    @Test
+    fun mapToDarkColorScheme_givenLowContrastOnPrimary_whenCalled_thenOnPrimaryIsAdjustedToPassAA() {
+        val palette = buildValidPalette(lightVibrantHex = "#888888", lightVibrantTitle = "#AAAAAA")
+
+        val result = mapToDarkColorScheme(palette)
+
+        assertTrue(contrastRatio(result.onPrimary.toHex(), "#888888") >= 4.5)
+    }
+
+    @Test
+    fun mapToDarkColorScheme_givenLowContrastOnSurface_whenCalled_thenOnSurfacePassesAAVsBothSurfaceAndBackground() {
+        val palette = buildValidPalette(darkMutedHex = "#1A1A2E", lightMutedTitle = "#000000")
+        val surfaceHex = compositeColorOverBackground("#1A1A2E", "#000000", 0.40)
+        val backgroundHex = compositeColorOverBackground("#1A1A2E", "#000000", 0.20)
+
+        val result = mapToDarkColorScheme(palette)
+
+        val onSurfaceHex = result.onSurface.toHex()
+        assertTrue(contrastRatio(onSurfaceHex, surfaceHex) >= 4.5)
+        assertTrue(contrastRatio(onSurfaceHex, backgroundHex) >= 4.5)
+    }
+
+    @Test
+    fun mapToDarkColorScheme_givenValidPalette_whenCalled_thenSurfaceIsDarkMutedDarkened60Percent() {
+        val palette = buildValidPalette(darkMutedHex = "#37474F")
+
+        val result = mapToDarkColorScheme(palette)
+
+        val expected = compositeColorOverBackground("#37474F", "#000000", 0.40).toColor()
+        assertEquals(expected, result.surface)
+    }
+
+    @Test
+    fun mapToDarkColorScheme_givenValidPalette_whenCalled_thenBackgroundIsDarkMutedDarkened80Percent() {
+        val palette = buildValidPalette(darkMutedHex = "#37474F")
+
+        val result = mapToDarkColorScheme(palette)
+
+        val expected = compositeColorOverBackground("#37474F", "#000000", 0.20).toColor()
+        assertEquals(expected, result.background)
+    }
+
+    @Test
+    fun mapToDarkColorScheme_givenValidPalette_whenCalled_thenOutlineIsCompositedMutedAt30OverDerivedSurface() {
+        val palette = buildValidPalette(darkMutedHex = "#37474F", mutedHex = "#607D8B")
+        val surfaceHex = compositeColorOverBackground("#37474F", "#000000", 0.40)
+
+        val result = mapToDarkColorScheme(palette)
+
+        val expected = compositeColorOverBackground("#607D8B", surfaceHex, 0.30).toColor()
+        assertEquals(expected, result.outline)
+    }
+
     // --- helpers ---
 
     private fun buildValidPalette(
@@ -106,16 +173,18 @@ class ColorSchemeMapperTest {
         vibrantTitle: String = "#FFFFFF",
         darkVibrantHex: String = "#3700B3",
         lightVibrantHex: String = "#BB86FC",
+        lightVibrantTitle: String = "#000000",
         mutedHex: String = "#607D8B",
         mutedTitle: String = "#FFFFFF",
         darkMutedHex: String = "#37474F",
         lightMutedHex: String = "#90A4AE",
+        lightMutedTitle: String = "#000000",
     ) = BlendedPalette(
         vibrant = SwatchData(hex = vibrantHex, titleText = vibrantTitle),
         darkVibrant = SwatchData(hex = darkVibrantHex, titleText = "#FFFFFF"),
-        lightVibrant = SwatchData(hex = lightVibrantHex, titleText = "#000000"),
+        lightVibrant = SwatchData(hex = lightVibrantHex, titleText = lightVibrantTitle),
         muted = SwatchData(hex = mutedHex, titleText = mutedTitle),
         darkMuted = SwatchData(hex = darkMutedHex, titleText = "#FFFFFF"),
-        lightMuted = SwatchData(hex = lightMutedHex, titleText = "#000000"),
+        lightMuted = SwatchData(hex = lightMutedHex, titleText = lightMutedTitle),
     )
 }
