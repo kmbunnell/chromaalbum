@@ -1,6 +1,7 @@
 package com.example.chromaalbum.ui.theme
 
 import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 import com.example.chromaalbum.domain.model.BlendedPalette
@@ -50,6 +51,43 @@ fun mapToLightColorScheme(palette: BlendedPalette?): ColorScheme {
         primaryContainer = primaryContainer,
         background = BACKGROUND.toColor(),
         surface = SURFACE.toColor(),
+        onSurface = onSurface,
+        outline = outline,
+    )
+}
+
+private const val DARK_SURFACE_ALPHA = 0.40
+private const val DARK_BACKGROUND_ALPHA = 0.20
+private const val DARK_OUTLINE_ALPHA = 0.30
+private const val BLACK = "#000000"
+
+fun mapToDarkColorScheme(palette: BlendedPalette?): ColorScheme {
+    if (palette == null || palette.isEmpty()) return DefaultColorSchemes.darkDefault
+
+    val lightVibrant = palette.lightVibrant ?: return DefaultColorSchemes.darkDefault
+    val darkVibrant = palette.darkVibrant ?: return DefaultColorSchemes.darkDefault
+    val darkMuted = palette.darkMuted ?: return DefaultColorSchemes.darkDefault
+    val lightMuted = palette.lightMuted ?: return DefaultColorSchemes.darkDefault
+    val muted = palette.muted ?: return DefaultColorSchemes.darkDefault
+
+    val surfaceHex = compositeColorOverBackground(darkMuted.hex, BLACK, DARK_SURFACE_ALPHA)
+    val backgroundHex = compositeColorOverBackground(darkMuted.hex, BLACK, DARK_BACKGROUND_ALPHA)
+
+    val onPrimary = adjustForContrast(lightVibrant.titleText, lightVibrant.hex).toColor()
+    val onSurface =
+        adjustForContrast(
+            adjustForContrast(lightMuted.titleText, surfaceHex),
+            backgroundHex,
+        ).toColor()
+    val outline = compositeColorOverBackground(muted.hex, surfaceHex, DARK_OUTLINE_ALPHA).toColor()
+
+    return darkColorScheme(
+        primary = lightVibrant.hex.toColor(),
+        onPrimary = onPrimary,
+        primaryContainer = darkVibrant.hex.toColor(),
+        secondary = lightMuted.hex.toColor(),
+        surface = surfaceHex.toColor(),
+        background = backgroundHex.toColor(),
         onSurface = onSurface,
         outline = outline,
     )
