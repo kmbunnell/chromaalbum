@@ -15,11 +15,13 @@ Always present the best architectural solution, not merely one that satisfies ac
 All code must be written to senior Android engineer quality:
 - Follow Google's [Android Architecture Guidelines](https://developer.android.com/topic/architecture)
 - Use Test-Driven Development: write the failing test first, then implement
-- Unidirectional data flow; stateless composables observe ViewModel `StateFlow`
+- Stateless composables observe ViewModel `StateFlow`
 - No third-party paid dependencies — first-party Jetpack/Google only
 - DRY: reuse before creating. Check `ui/components/`, mappers, and extensions before adding similar code.
 - SOLID: single responsibility per class; depend on interfaces, not concretions (Hilt wires them).
 - ViewModels expose state and forward intents only. **All business logic lives in use cases** under `domain/usecase/`.
+- Use cases that can fail return `Flow<Result<S, F>>` (`domain/model/Result.kt`). They own the `.catch` (with CE guard) and surface errors as `Result.Failure`. ViewModels map `Result` variants to UI state and never add their own `.catch`.
+- **Layer boundaries are enforced even though this is a single-module app.** `domain/` must not import from `ui/` or `data/`. `ui/` depends on `domain/` only via use cases and models — never on repository or Room types directly. Treat the layers as if they were separate Gradle modules: a violation that would cause a compile error in a multi-module build is equally wrong here.
 - Never swallow `CancellationException` in coroutines. When a `catch (e: Exception)` block handles an error without rethrowing, precede it with `catch (e: CancellationException) { throw e }`. If the catch block unconditionally rethrows (e.g. cleanup then `throw e`), the separate CE guard is redundant — a single `catch (e: Exception)` suffices since CE is rethrown with everything else. Avoid `runCatching { }.getOrNull()` for the same reason.
 - Do not create new packages or directories without asking first.
 - Do not manually construct class instances in Compose screens — always inject
@@ -42,7 +44,7 @@ All code must be written to senior Android engineer quality:
 
 **Domain layer:** Domain services (e.g. `PaletteCompleter`) encapsulate pure domain logic shared across use cases and live alongside the interfaces they support (e.g. `domain/palette/`).
 
-**Key data flow:** `Room Flow<Album>` → `ViewModel` parses `paletteJson` → `BlendedPalette` → `ColorSchemeMapper` → scoped `MaterialTheme(colorScheme)` wrapping album screens.
+**Key data flow:** `Room Flow<AlbumEntity>` → `AlbumRepository` mapper parses `paletteJson` → `Flow<Album(palette: BlendedPalette?)>` → `ViewModel` → `ColorSchemeMapper` → scoped `MaterialTheme(colorScheme)` wrapping album screens.
 
 ## Dynamic Theming
 
@@ -57,7 +59,7 @@ All code must be written to senior Android engineer quality:
 - Blends palettes across **all** photos (not just cover): downsample each to 100×100, extract per-photo Palette, weighted-average by pixel population per swatch category
 - Photo additions debounced 2 seconds before triggering regeneration
 - Albums >50 photos: sample 50 evenly-spaced
-3- Raw extraction leaves nulls in `BlendedPalette`. `PaletteCompleter` fills structural gaps using HSL derivation from available swatches; if all swatches are null it passes through unchanged. `ColorSchemeMapper` owns the final hardcoded fallback (`#6750A4`) for the all-null case.
+- Raw extraction leaves nulls in `BlendedPalette`. `PaletteCompleter` fills structural gaps using HSL derivation from available swatches; if all swatches are null it passes through unchanged. `ColorSchemeMapper` owns the final hardcoded fallback (`#6750A4`) for the all-null case.
 - All processing on `Dispatchers.Default`; cancels with `viewModelScope`
 
 ## Photo Storage
