@@ -29,7 +29,7 @@ fun rememberDynamicColorScheme(
 private fun lerp(
     start: ColorScheme,
     stop: ColorScheme,
-    fraction: Float
+    fraction: Float,
 ): ColorScheme =
     start.copy(
         primary = lerp(start.primary, stop.primary, fraction),
