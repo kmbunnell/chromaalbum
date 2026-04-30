@@ -15,10 +15,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.chromaalbum.R
 import com.example.chromaalbum.domain.model.Album
 import com.example.chromaalbum.ui.theme.mapToDarkColorScheme
 import com.example.chromaalbum.ui.theme.mapToLightColorScheme
@@ -35,11 +37,12 @@ fun AlbumCard(
             if (isDark) mapToDarkColorScheme(album.palette) else mapToLightColorScheme(album.palette)
         }
 
+    val albumContentDescription = stringResource(R.string.album_card_content_description, album.name)
     ElevatedCard(
         onClick = onClick,
         modifier =
             modifier.testTag("album_card").semantics {
-                contentDescription = "${album.name} album"
+                contentDescription = albumContentDescription
             },
         colors = CardDefaults.elevatedCardColors(containerColor = albumScheme.primaryContainer),
     ) {

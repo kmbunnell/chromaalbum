@@ -23,23 +23,40 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowWidthSizeClass
+import com.example.chromaalbum.R
+import com.example.chromaalbum.domain.model.Album
 import com.example.chromaalbum.ui.components.AlbumCard
+import com.example.chromaalbum.ui.components.AlbumFormSheet
+import com.example.chromaalbum.ui.components.AlbumSheetMode
 
 @Composable
 fun HomeScreen(
     onAlbumClick: (Long) -> Unit,
-    onCreateAlbum: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    HomeContent(uiState = uiState, onAlbumClick = onAlbumClick, onCreateAlbum = onCreateAlbum)
+
+    LaunchedEffect(Unit) {
+        viewModel.navigationEvents.collect { albumId -> onAlbumClick(albumId) }
+    }
+
+    HomeContent(
+        uiState = uiState,
+        onAlbumClick = onAlbumClick,
+        onCreateAlbum = viewModel::showCreateSheet,
+        onDismissSheet = viewModel::dismissSheet,
+        onSaveCreate = { name, desc -> viewModel.createAlbum(name, desc) },
+        onSaveEdit = { album, name, desc -> viewModel.updateAlbum(album.id, name, desc) },
+    )
 }
 
 @Composable
@@ -47,15 +64,32 @@ internal fun HomeContent(
     uiState: HomeUiState,
     onAlbumClick: (Long) -> Unit,
     onCreateAlbum: () -> Unit,
+    onDismissSheet: () -> Unit,
+    onSaveCreate: (String, String?) -> Unit,
+    onSaveEdit: (Album, String, String?) -> Unit,
 ) {
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
     val columns =
         if (windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT) 2 else 3
 
+    if (uiState.sheetMode != AlbumSheetMode.Hidden) {
+        AlbumFormSheet(
+            mode = uiState.sheetMode,
+            onSave = { name, desc ->
+                when (val mode = uiState.sheetMode) {
+                    is AlbumSheetMode.Create -> onSaveCreate(name, desc)
+                    is AlbumSheetMode.Edit -> onSaveEdit(mode.album, name, desc)
+                    AlbumSheetMode.Hidden -> Unit
+                }
+            },
+            onDismiss = onDismissSheet,
+        )
+    }
+
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(onClick = onCreateAlbum) {
-                Icon(Icons.Outlined.PhotoLibrary, contentDescription = "Create album")
+                Icon(Icons.Outlined.PhotoLibrary, contentDescription = stringResource(R.string.create_album))
             }
         },
     ) { innerPadding ->
@@ -100,10 +134,10 @@ private fun EmptyState(onCreateAlbum: () -> Unit) {
             modifier = Modifier.size(72.dp),
         )
         Spacer(modifier = Modifier.height(16.dp))
-        Text(text = "Create your first album")
+        Text(text = stringResource(R.string.home_empty_state_message))
         Spacer(modifier = Modifier.height(16.dp))
         OutlinedButton(onClick = onCreateAlbum) {
-            Text(text = "Create album")
+            Text(text = stringResource(R.string.create_album))
         }
     }
 }
