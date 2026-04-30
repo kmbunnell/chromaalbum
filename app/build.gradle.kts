@@ -82,6 +82,7 @@ dependencies {
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.androidx.palette)
     implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.material3.adaptive)
     ksp(libs.hilt.compiler)
     ksp(libs.room.compiler)
     testImplementation(libs.coil.test)
