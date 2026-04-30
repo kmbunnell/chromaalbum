@@ -44,6 +44,7 @@ class MainActivity : ComponentActivity() {
                             onAlbumClick = { albumId ->
                                 navController.navigate(AlbumRoute(albumId))
                             },
+                            onCreateAlbum = { /* TODO: navigate to CreateAlbum */ },
                         )
                     }
                     composable<AlbumRoute>(
