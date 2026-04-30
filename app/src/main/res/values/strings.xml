@@ -1,3 +1,18 @@
 <resources>
     <string name="app_name">Chromaalbum</string>
+
+    <!-- AlbumFormSheet -->
+    <string name="album_form_title_create">New album</string>
+    <string name="album_form_title_edit">Edit album</string>
+    <string name="album_form_label_name">Album name</string>
+    <string name="album_form_error_name_required">Album name is required</string>
+    <string name="album_form_label_description">Description (optional)</string>
+    <string name="album_form_button_save">Save</string>
+
+    <!-- HomeScreen -->
+    <string name="create_album">Create album</string>
+    <string name="home_empty_state_message">Create your first album</string>
+
+    <!-- AlbumCard -->
+    <string name="album_card_content_description">%s album</string>
 </resources>

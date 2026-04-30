@@ -20,14 +20,15 @@ class HomeScreenTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    private val stubAlbum = Album(
-        id = 1L,
-        name = "Test Album",
-        description = null,
-        createdAt = 0L,
-        updatedAt = 0L,
-        coverPhotoUri = null,
-    )
+    private val stubAlbum =
+        Album(
+            id = 1L,
+            name = "Test Album",
+            description = null,
+            createdAt = 0L,
+            updatedAt = 0L,
+            coverPhotoUri = null,
+        )
 
     @Test
     fun content_givenEmptyAlbumsAndNotLoading_whenRendered_thenEmptyStateTextDisplayed() {
@@ -36,6 +37,9 @@ class HomeScreenTest {
                 uiState = HomeUiState(albums = emptyList(), isLoading = false),
                 onAlbumClick = {},
                 onCreateAlbum = {},
+                onDismissSheet = {},
+                onSaveCreate = { _, _ -> },
+                onSaveEdit = { _, _, _ -> },
             )
         }
 
@@ -49,6 +53,9 @@ class HomeScreenTest {
                 uiState = HomeUiState(albums = listOf(stubAlbum), isLoading = false),
                 onAlbumClick = {},
                 onCreateAlbum = {},
+                onDismissSheet = {},
+                onSaveCreate = { _, _ -> },
+                onSaveEdit = { _, _, _ -> },
             )
         }
 
@@ -62,6 +69,9 @@ class HomeScreenTest {
                 uiState = HomeUiState(albums = emptyList(), isLoading = true),
                 onAlbumClick = {},
                 onCreateAlbum = {},
+                onDismissSheet = {},
+                onSaveCreate = { _, _ -> },
+                onSaveEdit = { _, _, _ -> },
             )
         }
 
@@ -87,6 +97,9 @@ class HomeScreenTest {
                 uiState = HomeUiState(albums = fiveAlbums, isLoading = false),
                 onAlbumClick = {},
                 onCreateAlbum = {},
+                onDismissSheet = {},
+                onSaveCreate = { _, _ -> },
+                onSaveEdit = { _, _, _ -> },
             )
         }
 
