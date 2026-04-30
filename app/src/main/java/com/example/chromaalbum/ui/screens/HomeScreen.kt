@@ -3,15 +3,16 @@ package com.example.chromaalbum.ui.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material3.CircularProgressIndicator
@@ -20,6 +21,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -27,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.window.core.layout.WindowWidthSizeClass
 import com.example.chromaalbum.ui.components.AlbumCard
 
 @Composable
@@ -45,6 +48,10 @@ internal fun HomeContent(
     onAlbumClick: (Long) -> Unit,
     onCreateAlbum: () -> Unit,
 ) {
+    val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
+    val columns =
+        if (windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT) 2 else 3
+
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(onClick = onCreateAlbum) {
@@ -61,15 +68,18 @@ internal fun HomeContent(
                 uiState.error != null -> Text(text = uiState.error.orEmpty())
                 uiState.albums.isEmpty() -> EmptyState(onCreateAlbum = onCreateAlbum)
                 else ->
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(2),
-                        modifier = Modifier.fillMaxSize().padding(8.dp),
+                    LazyVerticalStaggeredGrid(
+                        columns = StaggeredGridCells.Fixed(columns),
+                        contentPadding = PaddingValues(12.dp),
+                        verticalItemSpacing = 8.dp,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxSize(),
                     ) {
-                        items(uiState.albums) { album ->
+                        items(uiState.albums, key = { it.id }) { album ->
                             AlbumCard(
                                 album = album,
                                 onClick = { onAlbumClick(album.id) },
-                                modifier = Modifier.padding(4.dp).fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth().animateItem(),
                             )
                         }
                     }

@@ -1,8 +1,10 @@
 package com.example.chromaalbum.ui.screens
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithText
 import com.example.chromaalbum.domain.model.Album
 import org.junit.Rule
@@ -64,5 +66,30 @@ class HomeScreenTest {
         }
 
         composeTestRule.onNodeWithText("Create your first album").assertIsNotDisplayed()
+    }
+
+    @Test
+    fun homeContent_given5Albums_whenRendered_then5AlbumCardNodesPresent() {
+        val fiveAlbums =
+            (1..5).map { i ->
+                Album(
+                    id = i.toLong(),
+                    name = "Album $i",
+                    description = null,
+                    createdAt = 0L,
+                    updatedAt = 0L,
+                    coverPhotoUri = null,
+                )
+            }
+
+        composeTestRule.setContent {
+            HomeContent(
+                uiState = HomeUiState(albums = fiveAlbums, isLoading = false),
+                onAlbumClick = {},
+                onCreateAlbum = {},
+            )
+        }
+
+        composeTestRule.onAllNodesWithTag("album_card").assertCountEquals(5)
     }
 }
