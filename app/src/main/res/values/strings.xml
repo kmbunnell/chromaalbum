@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Chromaalbum</string>
+    <string name="app_name">ChromaAlbum</string>
 
     <!-- AlbumFormSheet -->
     <string name="album_form_title_create">New album</string>
