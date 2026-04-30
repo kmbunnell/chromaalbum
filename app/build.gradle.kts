@@ -81,6 +81,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.androidx.palette)
+    implementation(libs.androidx.compose.material.icons.extended)
     ksp(libs.hilt.compiler)
     ksp(libs.room.compiler)
     testImplementation(libs.coil.test)
