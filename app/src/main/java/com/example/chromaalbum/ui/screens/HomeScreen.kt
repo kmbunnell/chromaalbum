@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.PhotoLibrary
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -26,12 +27,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.remember
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -66,6 +68,9 @@ fun HomeScreen(
         onSaveCreate = { name, desc -> viewModel.createAlbum(name, desc) },
         onSaveEdit = { album, name, desc -> viewModel.updateAlbum(album.id, name, desc) },
         onErrorDismissed = viewModel::clearError,
+        onLongPressAlbum = viewModel::requestDeleteAlbum,
+        onDismissDeleteDialog = viewModel::dismissDeleteDialog,
+        onConfirmDelete = viewModel::confirmDeleteAlbum,
     )
 }
 
@@ -79,6 +84,9 @@ internal fun HomeContent(
     onSaveCreate: (String, String?) -> Unit,
     onSaveEdit: (Album, String, String?) -> Unit,
     onErrorDismissed: () -> Unit,
+    onLongPressAlbum: (Album) -> Unit = {},
+    onDismissDeleteDialog: () -> Unit = {},
+    onConfirmDelete: () -> Unit = {},
 ) {
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
     val columns =
@@ -102,6 +110,21 @@ internal fun HomeContent(
                 }
             },
             onDismiss = onDismissSheet,
+        )
+    }
+
+    val pendingDelete = uiState.albumPendingDelete
+    if (pendingDelete != null) {
+        AlertDialog(
+            onDismissRequest = onDismissDeleteDialog,
+            title = { Text("Delete ${pendingDelete.name}?") },
+            text = { Text("This will permanently remove all photos in this album.") },
+            confirmButton = {
+                TextButton(onClick = onConfirmDelete) { Text("Delete") }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismissDeleteDialog) { Text("Cancel") }
+            },
         )
     }
 
@@ -139,6 +162,7 @@ internal fun HomeContent(
                                 album = album,
                                 onClick = { onAlbumClick(album.id) },
                                 modifier = Modifier.fillMaxWidth().animateItem(),
+                                onLongPress = { onLongPressAlbum(album) },
                             )
                         }
                     }

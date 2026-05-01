@@ -1,5 +1,7 @@
 package com.example.chromaalbum.ui.components
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -25,11 +27,13 @@ import com.example.chromaalbum.domain.model.Album
 import com.example.chromaalbum.ui.theme.mapToDarkColorScheme
 import com.example.chromaalbum.ui.theme.mapToLightColorScheme
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AlbumCard(
     album: Album,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onLongPress: (() -> Unit)? = null,
 ) {
     val isDark = isSystemInDarkTheme()
     val albumScheme =
@@ -39,11 +43,11 @@ fun AlbumCard(
 
     val albumContentDescription = stringResource(R.string.album_card_content_description, album.name)
     ElevatedCard(
-        onClick = onClick,
         modifier =
-            modifier.testTag("album_card").semantics {
-                contentDescription = albumContentDescription
-            },
+            modifier
+                .testTag("album_card")
+                .semantics { contentDescription = albumContentDescription }
+                .combinedClickable(onClick = onClick, onLongClick = onLongPress ?: {}),
         colors = CardDefaults.elevatedCardColors(containerColor = albumScheme.primaryContainer),
     ) {
         Column(
