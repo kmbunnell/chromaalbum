@@ -1,13 +1,11 @@
 package com.example.chromaalbum.ui.screens
 
-import app.cash.turbine.test
 import com.example.chromaalbum.domain.FakeAlbumRepository
 import com.example.chromaalbum.domain.ThrowingAlbumRepository
 import com.example.chromaalbum.domain.model.Album
 import com.example.chromaalbum.ui.components.AlbumSheetMode
 import com.example.chromaalbum.domain.model.BlendedPalette
 import com.example.chromaalbum.domain.model.Photo
-import com.example.chromaalbum.domain.model.Result
 import com.example.chromaalbum.domain.repository.AlbumRepository
 import com.example.chromaalbum.domain.usecase.CreateAlbumUseCase
 import com.example.chromaalbum.domain.usecase.GetAlbumsUseCase
@@ -152,13 +150,11 @@ class HomeViewModelTest {
         }
 
     @Test
-    fun createAlbum_givenSuccess_whenCompletes_thenSheetHiddenAndNavigationEventEmitted() =
+    fun createAlbum_givenSuccess_whenCompletes_thenSheetHiddenAndPendingNavigationSet() =
         runTest(testDispatcher) {
             val viewModel = homeViewModel(createAlbumUseCase = successCreateUseCase(99L))
             val states = mutableListOf<HomeUiState>()
-            val navEvents = mutableListOf<Long>()
             val stateJob = launch { viewModel.uiState.collect { states.add(it) } }
-            val navJob = launch { viewModel.navigationEvents.collect { navEvents.add(it) } }
             advanceUntilIdle()
 
             viewModel.showCreateSheet()
@@ -167,9 +163,25 @@ class HomeViewModelTest {
             advanceUntilIdle()
 
             assertEquals(AlbumSheetMode.Hidden, states.last().sheetMode)
-            assertEquals(listOf(99L), navEvents)
+            assertEquals(99L, states.last().pendingNavigation)
             stateJob.cancel()
-            navJob.cancel()
+        }
+
+    @Test
+    fun consumeNavigation_givenPendingNavigation_whenCalled_thenPendingNavigationNull() =
+        runTest(testDispatcher) {
+            val viewModel = homeViewModel(createAlbumUseCase = successCreateUseCase(99L))
+            val states = mutableListOf<HomeUiState>()
+            val stateJob = launch { viewModel.uiState.collect { states.add(it) } }
+            advanceUntilIdle()
+            viewModel.createAlbum("New Album", null)
+            advanceUntilIdle()
+
+            viewModel.consumeNavigation()
+            advanceUntilIdle()
+
+            assertNull(states.last().pendingNavigation)
+            stateJob.cancel()
         }
 
     @Test

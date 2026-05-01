@@ -23,8 +23,11 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.remember
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -49,8 +52,10 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(Unit) {
-        viewModel.navigationEvents.collect { albumId -> onAlbumClick(albumId) }
+    LaunchedEffect(uiState.pendingNavigation) {
+        val id = uiState.pendingNavigation ?: return@LaunchedEffect
+        onAlbumClick(id)
+        viewModel.consumeNavigation()
     }
 
     HomeContent(
@@ -60,6 +65,7 @@ fun HomeScreen(
         onDismissSheet = viewModel::dismissSheet,
         onSaveCreate = { name, desc -> viewModel.createAlbum(name, desc) },
         onSaveEdit = { album, name, desc -> viewModel.updateAlbum(album.id, name, desc) },
+        onErrorDismissed = viewModel::clearError,
     )
 }
 
@@ -72,10 +78,18 @@ internal fun HomeContent(
     onDismissSheet: () -> Unit,
     onSaveCreate: (String, String?) -> Unit,
     onSaveEdit: (Album, String, String?) -> Unit,
+    onErrorDismissed: () -> Unit,
 ) {
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
     val columns =
         if (windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT) 2 else 3
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(uiState.error) {
+        val message = uiState.error ?: return@LaunchedEffect
+        snackbarHostState.showSnackbar(message)
+        onErrorDismissed()
+    }
 
     if (uiState.sheetMode != AlbumSheetMode.Hidden) {
         AlbumFormSheet(
@@ -103,6 +117,7 @@ internal fun HomeContent(
                 Icon(Icons.Default.Add, contentDescription = stringResource(R.string.create_album))
             }
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { innerPadding ->
         Box(
             modifier = Modifier.fillMaxSize().padding(innerPadding),
@@ -110,7 +125,6 @@ internal fun HomeContent(
         ) {
             when {
                 uiState.isLoading -> CircularProgressIndicator()
-                uiState.error != null -> Text(text = uiState.error.orEmpty())
                 uiState.albums.isEmpty() -> EmptyState(onCreateAlbum = onCreateAlbum)
                 else ->
                     LazyVerticalStaggeredGrid(
