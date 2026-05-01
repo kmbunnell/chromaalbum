@@ -9,4 +9,5 @@ data class HomeUiState(
     val error: String? = null,
     val sheetMode: AlbumSheetMode = AlbumSheetMode.Hidden,
     val pendingNavigation: Long? = null,
+    val albumPendingDelete: Album? = null,
 )

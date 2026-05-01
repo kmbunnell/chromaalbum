@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.chromaalbum.domain.model.Album
 import com.example.chromaalbum.domain.model.Result
 import com.example.chromaalbum.domain.usecase.CreateAlbumUseCase
+import com.example.chromaalbum.domain.usecase.DeleteAlbumUseCase
 import com.example.chromaalbum.domain.usecase.GetAlbumsUseCase
 import com.example.chromaalbum.domain.usecase.UpdateAlbumUseCase
 import com.example.chromaalbum.ui.components.AlbumSheetMode
@@ -23,6 +24,7 @@ class HomeViewModel
         private val getAlbumsUseCase: GetAlbumsUseCase,
         private val createAlbumUseCase: CreateAlbumUseCase,
         private val updateAlbumUseCase: UpdateAlbumUseCase,
+        private val deleteAlbumUseCase: DeleteAlbumUseCase,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(HomeUiState(isLoading = true))
         val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
@@ -90,6 +92,27 @@ class HomeViewModel
                     when (result) {
                         is Result.Success -> _uiState.update { it.copy(sheetMode = AlbumSheetMode.Hidden) }
                         is Result.Failure -> _uiState.update { it.copy(error = result.error) }
+                    }
+                }
+            }
+        }
+
+        fun requestDeleteAlbum(album: Album) {
+            _uiState.update { it.copy(albumPendingDelete = album) }
+        }
+
+        fun dismissDeleteDialog() {
+            _uiState.update { it.copy(albumPendingDelete = null) }
+        }
+
+        fun confirmDeleteAlbum() {
+            val album = _uiState.value.albumPendingDelete ?: return
+            viewModelScope.launch {
+                deleteAlbumUseCase(album).collect { result ->
+                    when (result) {
+                        is Result.Success -> _uiState.update { it.copy(albumPendingDelete = null) }
+                        is Result.Failure ->
+                            _uiState.update { it.copy(error = result.error, albumPendingDelete = null) }
                     }
                 }
             }

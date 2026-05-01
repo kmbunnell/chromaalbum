@@ -8,6 +8,7 @@ import com.example.chromaalbum.domain.model.BlendedPalette
 import com.example.chromaalbum.domain.model.Photo
 import com.example.chromaalbum.domain.repository.AlbumRepository
 import com.example.chromaalbum.domain.usecase.CreateAlbumUseCase
+import com.example.chromaalbum.domain.usecase.DeleteAlbumUseCase
 import com.example.chromaalbum.domain.usecase.GetAlbumsUseCase
 import com.example.chromaalbum.domain.usecase.UpdateAlbumUseCase
 import kotlinx.coroutines.Dispatchers
@@ -236,6 +237,74 @@ class HomeViewModelTest {
             stateJob.cancel()
         }
 
+    @Test
+    fun requestDeleteAlbum_givenAlbum_whenCalled_thenAlbumPendingDeleteSet() =
+        runTest(testDispatcher) {
+            val viewModel = homeViewModel()
+            val states = mutableListOf<HomeUiState>()
+            val job = launch { viewModel.uiState.collect { states.add(it) } }
+            advanceUntilIdle()
+
+            viewModel.requestDeleteAlbum(album(1L))
+            advanceUntilIdle()
+
+            assertEquals(album(1L), states.last().albumPendingDelete)
+            job.cancel()
+        }
+
+    @Test
+    fun dismissDeleteDialog_givenPendingDelete_whenCalled_thenAlbumPendingDeleteNull() =
+        runTest(testDispatcher) {
+            val viewModel = homeViewModel()
+            val states = mutableListOf<HomeUiState>()
+            val job = launch { viewModel.uiState.collect { states.add(it) } }
+            advanceUntilIdle()
+
+            viewModel.requestDeleteAlbum(album(1L))
+            advanceUntilIdle()
+            viewModel.dismissDeleteDialog()
+            advanceUntilIdle()
+
+            assertNull(states.last().albumPendingDelete)
+            job.cancel()
+        }
+
+    @Test
+    fun confirmDeleteAlbum_givenSuccess_whenCompletes_thenAlbumPendingDeleteClearedAndNoError() =
+        runTest(testDispatcher) {
+            val viewModel = homeViewModel(deleteAlbumUseCase = successDeleteUseCase())
+            val states = mutableListOf<HomeUiState>()
+            val job = launch { viewModel.uiState.collect { states.add(it) } }
+            advanceUntilIdle()
+
+            viewModel.requestDeleteAlbum(album(1L))
+            advanceUntilIdle()
+            viewModel.confirmDeleteAlbum()
+            advanceUntilIdle()
+
+            assertNull(states.last().albumPendingDelete)
+            assertNull(states.last().error)
+            job.cancel()
+        }
+
+    @Test
+    fun confirmDeleteAlbum_givenFailure_whenCompletes_thenErrorSetAndAlbumPendingDeleteCleared() =
+        runTest(testDispatcher) {
+            val viewModel = homeViewModel(deleteAlbumUseCase = failureDeleteUseCase("delete failed"))
+            val states = mutableListOf<HomeUiState>()
+            val job = launch { viewModel.uiState.collect { states.add(it) } }
+            advanceUntilIdle()
+
+            viewModel.requestDeleteAlbum(album(1L))
+            advanceUntilIdle()
+            viewModel.confirmDeleteAlbum()
+            advanceUntilIdle()
+
+            assertNull(states.last().albumPendingDelete)
+            assertEquals("delete failed", states.last().error)
+            job.cancel()
+        }
+
     // endregion
 
     // region — helpers
@@ -244,7 +313,8 @@ class HomeViewModelTest {
         getAlbumsUseCase: GetAlbumsUseCase = GetAlbumsUseCase(FakeAlbumRepository(flowOf())),
         createAlbumUseCase: CreateAlbumUseCase = successCreateUseCase(0L),
         updateAlbumUseCase: UpdateAlbumUseCase = successUpdateUseCase(),
-    ) = HomeViewModel(getAlbumsUseCase, createAlbumUseCase, updateAlbumUseCase)
+        deleteAlbumUseCase: DeleteAlbumUseCase = successDeleteUseCase(),
+    ) = HomeViewModel(getAlbumsUseCase, createAlbumUseCase, updateAlbumUseCase, deleteAlbumUseCase)
 
     private fun successCreateUseCase(id: Long) =
         CreateAlbumUseCase(stubRepo(createAlbum = { _, _ -> id }))
@@ -258,16 +328,23 @@ class HomeViewModelTest {
     private fun failureUpdateUseCase(error: String) =
         UpdateAlbumUseCase(stubRepo(albumFlow = flowOf(album(1L)), onUpdate = { throw RuntimeException(error) }))
 
+    private fun successDeleteUseCase() =
+        DeleteAlbumUseCase(stubRepo(onDelete = {}))
+
+    private fun failureDeleteUseCase(error: String) =
+        DeleteAlbumUseCase(stubRepo(onDelete = { throw RuntimeException(error) }))
+
     private fun stubRepo(
         albumFlow: Flow<Album?> = flowOf(null),
         createAlbum: suspend (String, String?) -> Long = { _, _ -> 0L },
         onUpdate: suspend (Album) -> Unit = {},
+        onDelete: suspend (Album) -> Unit = {},
     ) = object : AlbumRepository {
         override fun getAllAlbums(): Flow<List<Album>> = flowOf(emptyList())
         override fun getAlbumById(albumId: Long): Flow<Album?> = albumFlow
         override suspend fun createAlbum(name: String, description: String?) = createAlbum(name, description)
         override suspend fun updateAlbum(album: Album) = onUpdate(album)
-        override suspend fun deleteAlbum(album: Album) = error("unused")
+        override suspend fun deleteAlbum(album: Album) = onDelete(album)
         override suspend fun addPhotos(photos: List<Photo>) = error("unused")
         override suspend fun removePhoto(photo: Photo) = error("unused")
         override fun getPhotosForAlbum(albumId: Long): Flow<List<Photo>> = error("unused")
