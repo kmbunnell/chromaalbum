@@ -5,8 +5,11 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import com.example.chromaalbum.domain.model.Album
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -40,6 +43,7 @@ class HomeScreenTest {
                 onDismissSheet = {},
                 onSaveCreate = { _, _ -> },
                 onSaveEdit = { _, _, _ -> },
+                onErrorDismissed = {},
             )
         }
 
@@ -56,6 +60,7 @@ class HomeScreenTest {
                 onDismissSheet = {},
                 onSaveCreate = { _, _ -> },
                 onSaveEdit = { _, _, _ -> },
+                onErrorDismissed = {},
             )
         }
 
@@ -72,6 +77,7 @@ class HomeScreenTest {
                 onDismissSheet = {},
                 onSaveCreate = { _, _ -> },
                 onSaveEdit = { _, _, _ -> },
+                onErrorDismissed = {},
             )
         }
 
@@ -100,9 +106,48 @@ class HomeScreenTest {
                 onDismissSheet = {},
                 onSaveCreate = { _, _ -> },
                 onSaveEdit = { _, _, _ -> },
+                onErrorDismissed = {},
             )
         }
 
         composeTestRule.onAllNodesWithTag("album_card").assertCountEquals(5)
+    }
+
+    @Test
+    fun homeContent_givenAlbum_whenCardTapped_thenOnAlbumClickCalledWithAlbumId() {
+        var capturedId: Long? = null
+        composeTestRule.setContent {
+            HomeContent(
+                uiState = HomeUiState(albums = listOf(stubAlbum), isLoading = false),
+                onAlbumClick = { capturedId = it },
+                onCreateAlbum = {},
+                onDismissSheet = {},
+                onSaveCreate = { _, _ -> },
+                onSaveEdit = { _, _, _ -> },
+                onErrorDismissed = {},
+            )
+        }
+
+        composeTestRule.onNodeWithTag("album_card").performClick()
+
+        assertEquals(stubAlbum.id, capturedId)
+    }
+
+    @Test
+    fun homeContent_givenError_whenRendered_thenSnackbarDisplayed() {
+        composeTestRule.setContent {
+            HomeContent(
+                uiState = HomeUiState(error = "Something went wrong", isLoading = false),
+                onAlbumClick = {},
+                onCreateAlbum = {},
+                onDismissSheet = {},
+                onSaveCreate = { _, _ -> },
+                onSaveEdit = { _, _, _ -> },
+                onErrorDismissed = {},
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("Something went wrong").assertIsDisplayed()
     }
 }

@@ -9,11 +9,8 @@ import com.example.chromaalbum.domain.usecase.GetAlbumsUseCase
 import com.example.chromaalbum.domain.usecase.UpdateAlbumUseCase
 import com.example.chromaalbum.ui.components.AlbumSheetMode
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -29,9 +26,6 @@ class HomeViewModel
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(HomeUiState(isLoading = true))
         val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
-
-        private val _navigationEvents = MutableSharedFlow<Long>(extraBufferCapacity = 1)
-        val navigationEvents: SharedFlow<Long> = _navigationEvents.asSharedFlow()
 
         init {
             viewModelScope.launch {
@@ -58,6 +52,14 @@ class HomeViewModel
             _uiState.update { it.copy(sheetMode = AlbumSheetMode.Hidden, error = null) }
         }
 
+        fun clearError() {
+            _uiState.update { it.copy(error = null) }
+        }
+
+        fun consumeNavigation() {
+            _uiState.update { it.copy(pendingNavigation = null) }
+        }
+
         fun createAlbum(
             name: String,
             description: String?,
@@ -67,8 +69,9 @@ class HomeViewModel
                 createAlbumUseCase(name, description).collect { result ->
                     when (result) {
                         is Result.Success -> {
-                            _uiState.update { it.copy(sheetMode = AlbumSheetMode.Hidden) }
-                            _navigationEvents.tryEmit(result.data)
+                            _uiState.update {
+                                it.copy(sheetMode = AlbumSheetMode.Hidden, pendingNavigation = result.data)
+                            }
                         }
                         is Result.Failure -> _uiState.update { it.copy(error = result.error) }
                     }
