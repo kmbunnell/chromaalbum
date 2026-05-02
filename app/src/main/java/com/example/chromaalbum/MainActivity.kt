@@ -14,10 +14,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.example.chromaalbum.navigation.AlbumEditRoute
 import com.example.chromaalbum.navigation.AlbumRoute
 import com.example.chromaalbum.navigation.HomeRoute
 import com.example.chromaalbum.navigation.ViewerRoute
 import com.example.chromaalbum.ui.screens.AlbumDetailScreen
+import com.example.chromaalbum.ui.screens.AlbumEditScreen
 import com.example.chromaalbum.ui.screens.HomeScreen
 import com.example.chromaalbum.ui.screens.PhotoViewerScreen
 import com.example.chromaalbum.ui.theme.ChromaalbumTheme
@@ -44,6 +46,9 @@ class MainActivity : ComponentActivity() {
                             onAlbumClick = { albumId ->
                                 navController.navigate(AlbumRoute(albumId))
                             },
+                            onNavigateToCreate = {
+                                navController.navigate(AlbumEditRoute(null))
+                            },
                         )
                     }
                     composable<AlbumRoute>(
@@ -69,6 +74,12 @@ class MainActivity : ComponentActivity() {
                             startIndex = route.startIndex,
                             onBack = { navController.navigateUp() },
                         )
+                    }
+                    composable<AlbumEditRoute>(
+                        enterTransition = { slideInHorizontally { it } },
+                        popExitTransition = { slideOutHorizontally { it } },
+                    ) {
+                        AlbumEditScreen(onNavigateUp = { navController.navigateUp() })
                     }
                 }
             }

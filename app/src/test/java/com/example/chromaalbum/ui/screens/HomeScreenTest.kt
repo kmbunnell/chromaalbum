@@ -40,9 +40,6 @@ class HomeScreenTest {
                 uiState = HomeUiState(albums = emptyList(), isLoading = false),
                 onAlbumClick = {},
                 onCreateAlbum = {},
-                onDismissSheet = {},
-                onSaveCreate = { _, _ -> },
-                onSaveEdit = { _, _, _ -> },
                 onErrorDismissed = {},
             )
         }
@@ -57,9 +54,6 @@ class HomeScreenTest {
                 uiState = HomeUiState(albums = listOf(stubAlbum), isLoading = false),
                 onAlbumClick = {},
                 onCreateAlbum = {},
-                onDismissSheet = {},
-                onSaveCreate = { _, _ -> },
-                onSaveEdit = { _, _, _ -> },
                 onErrorDismissed = {},
             )
         }
@@ -74,9 +68,6 @@ class HomeScreenTest {
                 uiState = HomeUiState(albums = emptyList(), isLoading = true),
                 onAlbumClick = {},
                 onCreateAlbum = {},
-                onDismissSheet = {},
-                onSaveCreate = { _, _ -> },
-                onSaveEdit = { _, _, _ -> },
                 onErrorDismissed = {},
             )
         }
@@ -103,9 +94,6 @@ class HomeScreenTest {
                 uiState = HomeUiState(albums = fiveAlbums, isLoading = false),
                 onAlbumClick = {},
                 onCreateAlbum = {},
-                onDismissSheet = {},
-                onSaveCreate = { _, _ -> },
-                onSaveEdit = { _, _, _ -> },
                 onErrorDismissed = {},
             )
         }
@@ -121,9 +109,6 @@ class HomeScreenTest {
                 uiState = HomeUiState(albums = listOf(stubAlbum), isLoading = false),
                 onAlbumClick = { capturedId = it },
                 onCreateAlbum = {},
-                onDismissSheet = {},
-                onSaveCreate = { _, _ -> },
-                onSaveEdit = { _, _, _ -> },
                 onErrorDismissed = {},
             )
         }
@@ -140,9 +125,6 @@ class HomeScreenTest {
                 uiState = HomeUiState(error = "Something went wrong", isLoading = false),
                 onAlbumClick = {},
                 onCreateAlbum = {},
-                onDismissSheet = {},
-                onSaveCreate = { _, _ -> },
-                onSaveEdit = { _, _, _ -> },
                 onErrorDismissed = {},
             )
         }

@@ -15,3 +15,8 @@ data class ViewerRoute(
     val albumId: Long,
     val startIndex: Int,
 )
+
+@Serializable
+data class AlbumEditRoute(
+    val albumId: Long? = null,
+)

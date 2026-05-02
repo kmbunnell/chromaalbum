@@ -15,4 +15,8 @@
 
     <!-- AlbumCard -->
     <string name="album_card_content_description">%s album</string>
+
+    <!-- AlbumEditScreen -->
+    <string name="album_edit_button_done">Done</string>
+    <string name="navigate_up">Navigate up</string>
 </resources>
