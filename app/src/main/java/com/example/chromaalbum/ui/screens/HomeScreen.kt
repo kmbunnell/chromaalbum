@@ -44,29 +44,19 @@ import androidx.window.core.layout.WindowWidthSizeClass
 import com.example.chromaalbum.R
 import com.example.chromaalbum.domain.model.Album
 import com.example.chromaalbum.ui.components.AlbumCard
-import com.example.chromaalbum.ui.components.AlbumFormSheet
-import com.example.chromaalbum.ui.components.AlbumSheetMode
 
 @Composable
 fun HomeScreen(
     onAlbumClick: (Long) -> Unit,
+    onNavigateToCreate: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(uiState.pendingNavigation) {
-        val id = uiState.pendingNavigation ?: return@LaunchedEffect
-        onAlbumClick(id)
-        viewModel.consumeNavigation()
-    }
-
     HomeContent(
         uiState = uiState,
         onAlbumClick = onAlbumClick,
-        onCreateAlbum = viewModel::showCreateSheet,
-        onDismissSheet = viewModel::dismissSheet,
-        onSaveCreate = { name, desc -> viewModel.createAlbum(name, desc) },
-        onSaveEdit = { album, name, desc -> viewModel.updateAlbum(album.id, name, desc) },
+        onCreateAlbum = onNavigateToCreate,
         onErrorDismissed = viewModel::clearError,
         onLongPressAlbum = viewModel::requestDeleteAlbum,
         onDismissDeleteDialog = viewModel::dismissDeleteDialog,
@@ -80,9 +70,6 @@ internal fun HomeContent(
     uiState: HomeUiState,
     onAlbumClick: (Long) -> Unit,
     onCreateAlbum: () -> Unit,
-    onDismissSheet: () -> Unit,
-    onSaveCreate: (String, String?) -> Unit,
-    onSaveEdit: (Album, String, String?) -> Unit,
     onErrorDismissed: () -> Unit,
     onLongPressAlbum: (Album) -> Unit = {},
     onDismissDeleteDialog: () -> Unit = {},
@@ -97,20 +84,6 @@ internal fun HomeContent(
         val message = uiState.error ?: return@LaunchedEffect
         snackbarHostState.showSnackbar(message)
         onErrorDismissed()
-    }
-
-    if (uiState.sheetMode != AlbumSheetMode.Hidden) {
-        AlbumFormSheet(
-            mode = uiState.sheetMode,
-            onSave = { name, desc ->
-                when (val mode = uiState.sheetMode) {
-                    is AlbumSheetMode.Create -> onSaveCreate(name, desc)
-                    is AlbumSheetMode.Edit -> onSaveEdit(mode.album, name, desc)
-                    AlbumSheetMode.Hidden -> Unit
-                }
-            },
-            onDismiss = onDismissSheet,
-        )
     }
 
     val pendingDelete = uiState.albumPendingDelete
