@@ -12,6 +12,9 @@
     <!-- HomeScreen -->
     <string name="create_album">Create album</string>
     <string name="home_empty_state_message">Create your first album</string>
+    <string name="selected_count">%1$d selected</string>
+    <string name="delete_selected">Delete selected albums</string>
+    <string name="exit_selection_mode">Exit selection mode</string>
 
     <!-- AlbumCard -->
     <string name="album_card_content_description">%s album</string>

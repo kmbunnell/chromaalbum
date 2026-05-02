@@ -97,73 +97,118 @@ class HomeViewModelTest {
 
     // endregion
 
-    // region — delete
+    // region — selection mode
 
     @Test
-    fun requestDeleteAlbum_givenAlbum_whenCalled_thenAlbumPendingDeleteSet() =
+    fun toggleSelection_givenNoSelection_whenIdToggled_thenSelectionModeEnteredAndIdSelected() =
         runTest(testDispatcher) {
             val viewModel = homeViewModel()
             val states = mutableListOf<HomeUiState>()
             val job = launch { viewModel.uiState.collect { states.add(it) } }
             advanceUntilIdle()
 
-            viewModel.requestDeleteAlbum(album(1L))
+            viewModel.toggleSelection(1L)
             advanceUntilIdle()
 
-            assertEquals(album(1L), states.last().albumPendingDelete)
+            val state = states.last()
+            assertEquals(setOf(1L), state.selectedIds)
+            assertTrue(state.isSelectionMode)
             job.cancel()
         }
 
     @Test
-    fun dismissDeleteDialog_givenPendingDelete_whenCalled_thenAlbumPendingDeleteNull() =
+    fun toggleSelection_givenIdAlreadySelected_whenSameIdToggled_thenIdDeselectedAndSelectionModeExited() =
         runTest(testDispatcher) {
             val viewModel = homeViewModel()
             val states = mutableListOf<HomeUiState>()
             val job = launch { viewModel.uiState.collect { states.add(it) } }
             advanceUntilIdle()
 
-            viewModel.requestDeleteAlbum(album(1L))
-            advanceUntilIdle()
-            viewModel.dismissDeleteDialog()
+            viewModel.toggleSelection(1L)
+            viewModel.toggleSelection(1L)
             advanceUntilIdle()
 
-            assertNull(states.last().albumPendingDelete)
+            val state = states.last()
+            assertTrue(state.selectedIds.isEmpty())
+            assertFalse(state.isSelectionMode)
             job.cancel()
         }
 
     @Test
-    fun confirmDeleteAlbum_givenSuccess_whenCompletes_thenAlbumPendingDeleteClearedAndNoError() =
+    fun toggleSelection_givenOneSelected_whenDifferentIdToggled_thenBothIdsSelected() =
         runTest(testDispatcher) {
-            val viewModel = homeViewModel(deleteAlbumUseCase = successDeleteUseCase())
+            val viewModel = homeViewModel()
             val states = mutableListOf<HomeUiState>()
             val job = launch { viewModel.uiState.collect { states.add(it) } }
             advanceUntilIdle()
 
-            viewModel.requestDeleteAlbum(album(1L))
-            advanceUntilIdle()
-            viewModel.confirmDeleteAlbum()
+            viewModel.toggleSelection(1L)
+            viewModel.toggleSelection(2L)
             advanceUntilIdle()
 
-            assertNull(states.last().albumPendingDelete)
-            assertNull(states.last().error)
+            assertEquals(setOf(1L, 2L), states.last().selectedIds)
             job.cancel()
         }
 
     @Test
-    fun confirmDeleteAlbum_givenFailure_whenCompletes_thenErrorSetAndAlbumPendingDeleteCleared() =
+    fun exitSelectionMode_givenSomeSelected_whenCalled_thenSelectedIdsEmpty() =
         runTest(testDispatcher) {
-            val viewModel = homeViewModel(deleteAlbumUseCase = failureDeleteUseCase("delete failed"))
+            val viewModel = homeViewModel()
             val states = mutableListOf<HomeUiState>()
             val job = launch { viewModel.uiState.collect { states.add(it) } }
             advanceUntilIdle()
 
-            viewModel.requestDeleteAlbum(album(1L))
-            advanceUntilIdle()
-            viewModel.confirmDeleteAlbum()
+            viewModel.toggleSelection(1L)
+            viewModel.toggleSelection(2L)
+            viewModel.exitSelectionMode()
             advanceUntilIdle()
 
-            assertNull(states.last().albumPendingDelete)
-            assertEquals("delete failed", states.last().error)
+            assertTrue(states.last().selectedIds.isEmpty())
+            job.cancel()
+        }
+
+    @Test
+    fun deleteSelected_givenUseCaseSucceeds_whenCalled_thenSelectionClearedAndNoError() =
+        runTest(testDispatcher) {
+            val viewModel =
+                homeViewModel(
+                    getAlbumsUseCase = GetAlbumsUseCase(FakeAlbumRepository(flowOf(listOf(album(1L), album(2L))))),
+                    deleteAlbumUseCase = successDeleteUseCase(),
+                )
+            val states = mutableListOf<HomeUiState>()
+            val job = launch { viewModel.uiState.collect { states.add(it) } }
+            advanceUntilIdle()
+
+            viewModel.toggleSelection(1L)
+            viewModel.toggleSelection(2L)
+            viewModel.deleteSelected()
+            advanceUntilIdle()
+
+            val state = states.last()
+            assertTrue(state.selectedIds.isEmpty())
+            assertNull(state.error)
+            job.cancel()
+        }
+
+    @Test
+    fun deleteSelected_givenUseCaseFailure_whenCalled_thenSelectionClearedAndErrorSet() =
+        runTest(testDispatcher) {
+            val viewModel =
+                homeViewModel(
+                    getAlbumsUseCase = GetAlbumsUseCase(FakeAlbumRepository(flowOf(listOf(album(1L))))),
+                    deleteAlbumUseCase = failureDeleteUseCase("delete failed"),
+                )
+            val states = mutableListOf<HomeUiState>()
+            val job = launch { viewModel.uiState.collect { states.add(it) } }
+            advanceUntilIdle()
+
+            viewModel.toggleSelection(1L)
+            viewModel.deleteSelected()
+            advanceUntilIdle()
+
+            val state = states.last()
+            assertTrue(state.selectedIds.isEmpty())
+            assertNotNull(state.error)
             job.cancel()
         }
 
