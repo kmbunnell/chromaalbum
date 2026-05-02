@@ -15,10 +15,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.example.chromaalbum.navigation.AlbumEditRoute
-import com.example.chromaalbum.navigation.AlbumRoute
 import com.example.chromaalbum.navigation.HomeRoute
 import com.example.chromaalbum.navigation.ViewerRoute
-import com.example.chromaalbum.ui.screens.AlbumDetailScreen
 import com.example.chromaalbum.ui.screens.AlbumEditScreen
 import com.example.chromaalbum.ui.screens.HomeScreen
 import com.example.chromaalbum.ui.screens.PhotoViewerScreen
@@ -44,24 +42,13 @@ class MainActivity : ComponentActivity() {
                     ) {
                         HomeScreen(
                             onAlbumClick = { albumId ->
-                                navController.navigate(AlbumRoute(albumId))
+                                navController.navigate(AlbumEditRoute(albumId)) {
+                                    launchSingleTop = true
+                                }
                             },
                             onNavigateToCreate = {
                                 navController.navigate(AlbumEditRoute(null))
                             },
-                        )
-                    }
-                    composable<AlbumRoute>(
-                        enterTransition = { slideInHorizontally { it } },
-                        popExitTransition = { slideOutHorizontally { it } },
-                    ) { backStackEntry ->
-                        val route = backStackEntry.toRoute<AlbumRoute>()
-                        AlbumDetailScreen(
-                            albumId = route.albumId,
-                            onPhotoClick = { index ->
-                                navController.navigate(ViewerRoute(route.albumId, index))
-                            },
-                            onBack = { navController.navigateUp() },
                         )
                     }
                     composable<ViewerRoute>(
