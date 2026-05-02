@@ -2,7 +2,6 @@ package com.example.chromaalbum.ui.screens
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.chromaalbum.domain.model.Album
 import com.example.chromaalbum.domain.model.Result
 import com.example.chromaalbum.domain.usecase.DeleteAlbumUseCase
 import com.example.chromaalbum.domain.usecase.GetAlbumsUseCase
@@ -41,22 +40,28 @@ class HomeViewModel
             _uiState.update { it.copy(error = null) }
         }
 
-        fun requestDeleteAlbum(album: Album) {
-            _uiState.update { it.copy(albumPendingDelete = album) }
+        fun toggleSelection(id: Long) {
+            _uiState.update { state ->
+                val updated = if (id in state.selectedIds) state.selectedIds - id else state.selectedIds + id
+                state.copy(selectedIds = updated)
+            }
         }
 
-        fun dismissDeleteDialog() {
-            _uiState.update { it.copy(albumPendingDelete = null) }
+        fun exitSelectionMode() {
+            _uiState.update { it.copy(selectedIds = emptySet()) }
         }
 
-        fun confirmDeleteAlbum() {
-            val album = _uiState.value.albumPendingDelete ?: return
+        fun deleteSelected() {
+            val toDelete = _uiState.value.selectedIds
+            val albums = _uiState.value.albums.filter { it.id in toDelete }
+            _uiState.update { it.copy(selectedIds = emptySet()) }
             viewModelScope.launch {
-                deleteAlbumUseCase(album).collect { result ->
-                    when (result) {
-                        is Result.Success -> _uiState.update { it.copy(albumPendingDelete = null) }
-                        is Result.Failure ->
-                            _uiState.update { it.copy(error = result.error, albumPendingDelete = null) }
+                albums.forEach { album ->
+                    deleteAlbumUseCase(album).collect { result ->
+                        when (result) {
+                            is Result.Success -> Unit
+                            is Result.Failure -> _uiState.update { it.copy(error = result.error) }
+                        }
                     }
                 }
             }

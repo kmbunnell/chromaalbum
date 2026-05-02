@@ -3,14 +3,18 @@ package com.example.chromaalbum.ui.components
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -33,7 +37,9 @@ fun AlbumCard(
     album: Album,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onLongPress: (() -> Unit)? = null,
+    isSelected: Boolean = false,
+    onLongPress: () -> Unit = {},
+    onToggleSelect: () -> Unit = {},
 ) {
     val isDark = isSystemInDarkTheme()
     val albumScheme =
@@ -47,24 +53,34 @@ fun AlbumCard(
             modifier
                 .testTag("album_card")
                 .semantics { contentDescription = albumContentDescription }
-                .combinedClickable(onClick = onClick, onLongClick = onLongPress ?: {}),
+                .combinedClickable(onClick = onClick, onLongClick = onLongPress),
         colors = CardDefaults.elevatedCardColors(containerColor = albumScheme.primaryContainer),
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(16.dp),
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.PhotoLibrary,
-                contentDescription = null,
-                tint = albumScheme.primary,
-                modifier = Modifier.size(48.dp),
-            )
-            Text(
-                text = album.name,
-                fontWeight = FontWeight.Medium,
-                color = albumScheme.onPrimaryContainer,
-            )
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(16.dp).fillMaxWidth(),
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.PhotoLibrary,
+                    contentDescription = null,
+                    tint = albumScheme.primary,
+                    modifier = Modifier.size(48.dp),
+                )
+                Text(
+                    text = album.name,
+                    fontWeight = FontWeight.Medium,
+                    color = albumScheme.onPrimaryContainer,
+                )
+            }
+            if (isSelected) {
+                Icon(
+                    imageVector = Icons.Filled.CheckCircle,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.align(Alignment.TopEnd).padding(8.dp),
+                )
+            }
         }
     }
 }
