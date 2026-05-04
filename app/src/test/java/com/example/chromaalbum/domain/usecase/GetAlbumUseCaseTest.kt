@@ -58,7 +58,7 @@ class GetAlbumUseCaseTest {
         }
 
     private fun album(id: Long) =
-        Album(id = id, name = "Album $id", description = null, createdAt = 0L, updatedAt = 0L, coverPhotoUri = null)
+        Album(id = id, name = "Album $id", description = null, createdAt = 0L, updatedAt = 0L)
 
     private fun fakeRepo(albumFlow: Flow<Album?>) =
         object : AlbumRepository {

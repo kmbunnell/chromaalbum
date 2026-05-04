@@ -30,7 +30,6 @@ class HomeScreenTest {
             description = null,
             createdAt = 0L,
             updatedAt = 0L,
-            coverPhotoUri = null,
         )
 
     @Test
@@ -85,7 +84,6 @@ class HomeScreenTest {
                     description = null,
                     createdAt = 0L,
                     updatedAt = 0L,
-                    coverPhotoUri = null,
                 )
             }
 

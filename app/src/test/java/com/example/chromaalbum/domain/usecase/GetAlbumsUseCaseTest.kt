@@ -64,7 +64,6 @@ class GetAlbumsUseCaseTest {
             description = null,
             createdAt = 0L,
             updatedAt = 0L,
-            coverPhotoUri = null,
         )
 
 }

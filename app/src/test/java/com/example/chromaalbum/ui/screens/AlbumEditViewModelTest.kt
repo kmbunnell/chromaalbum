@@ -253,7 +253,7 @@ class AlbumEditViewModelTest {
     }
 
     private fun album(id: Long, name: String, description: String?) =
-        Album(id = id, name = name, description = description, createdAt = 0L, updatedAt = 0L, coverPhotoUri = null)
+        Album(id = id, name = name, description = description, createdAt = 0L, updatedAt = 0L)
 
     private fun photo(id: Long) =
         Photo(id = id, albumId = 1L, uri = "content://photo/$id", addedAt = 0L, sortOrder = id.toInt())

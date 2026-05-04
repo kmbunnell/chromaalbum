@@ -11,7 +11,6 @@ fun AlbumEntity.toDomain(): Album =
         description = description,
         createdAt = createdAt,
         updatedAt = updatedAt,
-        coverPhotoUri = coverPhotoUri,
         dominantColor = dominantColor,
         palette = BlendedPalette.fromJson(paletteJson) ?: BlendedPalette(),
     )
@@ -23,7 +22,6 @@ fun Album.toEntity(): AlbumEntity =
         description = description,
         createdAt = createdAt,
         updatedAt = updatedAt,
-        coverPhotoUri = coverPhotoUri,
         dominantColor = palette.dominantHex(),
         paletteJson = palette.toJson(),
     )
