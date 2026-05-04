@@ -21,5 +21,7 @@
 
     <!-- AlbumEditScreen -->
     <string name="album_edit_button_done">Done</string>
+    <string name="album_edit_button_add_photos">Add photos</string>
+    <string name="album_edit_empty_photos_prompt">Add photos to your album</string>
     <string name="navigate_up">Navigate up</string>
 </resources>
