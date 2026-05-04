@@ -11,7 +11,6 @@ data class AlbumEntity(
     val description: String?,
     val createdAt: Long,
     val updatedAt: Long,
-    val coverPhotoUri: String?,
     val dominantColor: String? = null,
     val paletteJson: String = EMPTY_PALETTE_JSON,
 ) {

@@ -35,7 +35,7 @@ class SaveNewAlbumUseCaseTest {
         override fun getPhotosForAlbum(albumId: Long): Flow<List<Photo>> = flowOf(emptyList())
 
         override fun getAlbumById(albumId: Long): Flow<Album?> =
-            flowOf(Album(id = albumId, name = "Test", description = null, createdAt = 0L, updatedAt = 0L, coverPhotoUri = null))
+            flowOf(Album(id = albumId, name = "Test", description = null, createdAt = 0L, updatedAt = 0L))
 
         override suspend fun addPhotos(photos: List<Photo>) {
             if (throwOnAddPhotos) throw RuntimeException("storage full")

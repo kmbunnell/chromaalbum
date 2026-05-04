@@ -6,7 +6,6 @@ data class Album(
     val description: String?,
     val createdAt: Long,
     val updatedAt: Long,
-    val coverPhotoUri: String?,
     val dominantColor: String? = null,
     val palette: BlendedPalette = BlendedPalette(),
 )

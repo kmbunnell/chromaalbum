@@ -43,7 +43,6 @@ class AlbumRepositoryImpl
                     description = description,
                     createdAt = now,
                     updatedAt = now,
-                    coverPhotoUri = null,
                     paletteJson = AlbumEntity.EMPTY_PALETTE_JSON,
                 ),
             )

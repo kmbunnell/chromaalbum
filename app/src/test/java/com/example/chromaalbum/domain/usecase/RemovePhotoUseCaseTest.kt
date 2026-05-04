@@ -8,59 +8,32 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Test
 
 class RemovePhotoUseCaseTest {
     @Test
-    fun invoke_givenNonCoverPhoto_thenCoverUnchanged() =
+    fun invoke_givenPhoto_whenInvoked_thenPhotoRemovedFromRepo() =
         runTest {
-            val fake = FakeRepo(album(cover = "uri://cover"))
-            fake.seed(photo(id = 1, uri = "uri://cover", sortOrder = 0))
-            fake.seed(photo(id = 2, uri = "uri://other", sortOrder = 1))
+            val fake = FakeRepo(album())
+            val p = photo(id = 1, uri = "uri://a", sortOrder = 0)
+            fake.seed(p)
             val useCase = RemovePhotoUseCase(fake)
 
-            useCase(photo(id = 2, uri = "uri://other", sortOrder = 1))
+            useCase(p)
 
-            assertEquals("uri://cover", fake.getAlbumById(ALBUM_ID).first()?.coverPhotoUri)
-        }
-
-    @Test
-    fun invoke_givenCoverPhoto_thenCoverUpdatedToFirstRemainingPhoto() =
-        runTest {
-            val fake = FakeRepo(album(cover = "uri://cover"))
-            fake.seed(photo(id = 1, uri = "uri://cover", sortOrder = 0))
-            fake.seed(photo(id = 2, uri = "uri://next", sortOrder = 1))
-            val useCase = RemovePhotoUseCase(fake)
-
-            useCase(photo(id = 1, uri = "uri://cover", sortOrder = 0))
-
-            assertEquals("uri://next", fake.getAlbumById(ALBUM_ID).first()?.coverPhotoUri)
-        }
-
-    @Test
-    fun invoke_givenOnlyPhoto_thenCoverSetToNull() =
-        runTest {
-            val fake = FakeRepo(album(cover = "uri://only"))
-            fake.seed(photo(id = 1, uri = "uri://only", sortOrder = 0))
-            val useCase = RemovePhotoUseCase(fake)
-
-            useCase(photo(id = 1, uri = "uri://only", sortOrder = 0))
-
-            assertNull(fake.getAlbumById(ALBUM_ID).first()?.coverPhotoUri)
+            assertEquals(emptyList<Photo>(), fake.getPhotosForAlbum(ALBUM_ID).first())
         }
 
     private companion object {
         const val ALBUM_ID = 1L
 
-        fun album(cover: String?) =
+        fun album() =
             Album(
                 id = ALBUM_ID,
                 name = "Test",
                 description = null,
                 createdAt = 0L,
                 updatedAt = 0L,
-                coverPhotoUri = cover,
             )
 
         fun photo(id: Long, uri: String, sortOrder: Int) =

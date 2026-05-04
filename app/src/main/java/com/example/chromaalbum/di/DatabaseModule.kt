@@ -3,6 +3,7 @@ package com.example.chromaalbum.di
 import android.content.Context
 import androidx.room.Room
 import com.example.chromaalbum.data.local.ChromaAlbumDatabase
+import com.example.chromaalbum.data.local.Migration1To2
 import com.example.chromaalbum.data.local.dao.AlbumDao
 import com.example.chromaalbum.data.local.dao.PhotoDao
 import dagger.Module
@@ -20,8 +21,10 @@ object DatabaseModule {
     fun provideDatabase(
         @ApplicationContext context: Context,
     ): ChromaAlbumDatabase =
-        // Add .addMigrations(...) here before incrementing the schema version
-        Room.databaseBuilder(context, ChromaAlbumDatabase::class.java, "chroma_album.db").build()
+        Room
+            .databaseBuilder(context, ChromaAlbumDatabase::class.java, "chroma_album.db")
+            .addMigrations(Migration1To2)
+            .build()
 
     @Provides
     @Singleton
