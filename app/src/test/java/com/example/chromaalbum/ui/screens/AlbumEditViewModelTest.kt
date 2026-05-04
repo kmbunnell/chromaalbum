@@ -4,13 +4,18 @@ import androidx.lifecycle.SavedStateHandle
 import com.example.chromaalbum.domain.model.Album
 import com.example.chromaalbum.domain.model.BlendedPalette
 import com.example.chromaalbum.domain.model.Photo
+import com.example.chromaalbum.domain.model.Result
 import com.example.chromaalbum.domain.repository.AlbumRepository
+import com.example.chromaalbum.domain.usecase.AddPhotosUseCase
+import com.example.chromaalbum.domain.usecase.CreateAlbumUseCase
 import com.example.chromaalbum.domain.usecase.GetAlbumUseCase
 import com.example.chromaalbum.domain.usecase.GetPhotosForAlbumUseCase
+import com.example.chromaalbum.domain.usecase.SaveNewAlbumUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -21,6 +26,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -114,12 +120,112 @@ class AlbumEditViewModelTest {
             job.cancel()
         }
 
+    @Test
+    fun onPhotosSelected_givenUris_whenCalled_thenDisplayUrisAppended() =
+        runTest(testDispatcher) {
+            val viewModel = viewModel(albumId = null)
+            val states = mutableListOf<AlbumEditUiState>()
+            val job = launch { viewModel.uiState.collect { states.add(it) } }
+
+            viewModel.onPhotosSelected(listOf("content://photo/1", "content://photo/2"))
+            advanceUntilIdle()
+
+            assertEquals(listOf("content://photo/1", "content://photo/2"), states.last().displayUris)
+            job.cancel()
+        }
+
+    @Test
+    fun onDone_givenUseCaseSuccess_whenDone_thenNavigateUpTrueAndIsSavingFalse() =
+        runTest(testDispatcher) {
+            val viewModel = viewModel(albumId = null, saveResult = Result.Success(1L))
+            val states = mutableListOf<AlbumEditUiState>()
+            val job = launch { viewModel.uiState.collect { states.add(it) } }
+
+            viewModel.onDone()
+            advanceUntilIdle()
+
+            val last = states.last()
+            assertTrue(last.navigateUp)
+            assertFalse(last.isSaving)
+            job.cancel()
+        }
+
+    @Test
+    fun onDone_givenUseCaseFailure_whenDone_thenErrorSetAndNoNavigation() =
+        runTest(testDispatcher) {
+            val viewModel = viewModel(albumId = null, saveResult = Result.Failure("save failed"))
+            val states = mutableListOf<AlbumEditUiState>()
+            val job = launch { viewModel.uiState.collect { states.add(it) } }
+
+            viewModel.onDone()
+            advanceUntilIdle()
+
+            val last = states.last()
+            assertEquals("save failed", last.error)
+            assertFalse(last.navigateUp)
+            assertFalse(last.isSaving)
+            job.cancel()
+        }
+
+    @Test
+    fun onNavigatedUp_givenNavigateUpTrue_whenCalled_thenNavigateUpFalse() =
+        runTest(testDispatcher) {
+            val viewModel = viewModel(albumId = null, saveResult = Result.Success(1L))
+            val states = mutableListOf<AlbumEditUiState>()
+            val job = launch { viewModel.uiState.collect { states.add(it) } }
+
+            viewModel.onDone()
+            advanceUntilIdle()
+            assertTrue(states.last().navigateUp)
+
+            viewModel.onNavigatedUp()
+            advanceUntilIdle()
+
+            assertFalse(states.last().navigateUp)
+            assertNull(states.last().error)
+            job.cancel()
+        }
+
     // region — helpers
+
+    /**
+     * Builds a SaveNewAlbumUseCase whose outcome is driven entirely by [saveResult].
+     *
+     * The VM tests call onDone() with no photos selected, so AddPhotosUseCase is never reached.
+     * For failures we throw inside createAlbum so CreateAlbumUseCase's own .catch produces
+     * the Failure with the expected message without needing a mock framework.
+     */
+    private fun fakeSave(saveResult: Result<Long, String>): SaveNewAlbumUseCase {
+        val controlRepo =
+            object : AlbumRepository {
+                override suspend fun createAlbum(name: String, description: String?): Long =
+                    when (saveResult) {
+                        is Result.Success -> saveResult.data
+                        is Result.Failure -> throw RuntimeException(saveResult.error)
+                    }
+
+                override fun getAllAlbums(): Flow<List<Album>> = error("unused")
+                override fun getAlbumById(albumId: Long): Flow<Album?> = error("unused")
+                override suspend fun updateAlbum(album: Album) = Unit
+                override suspend fun deleteAlbum(album: Album): Unit = error("unused")
+                override suspend fun addPhotos(photos: List<Photo>): Unit = error("unused")
+                override suspend fun removePhoto(photo: Photo): Unit = error("unused")
+                override fun getPhotosForAlbum(albumId: Long): Flow<List<Photo>> = error("unused")
+                override suspend fun persistPalette(albumId: Long, palette: BlendedPalette): Unit = error("unused")
+            }
+        return SaveNewAlbumUseCase(
+            createAlbumUseCase = CreateAlbumUseCase(controlRepo),
+            addPhotosUseCase = AddPhotosUseCase(controlRepo),
+            blendFn = { null },
+            repository = controlRepo,
+        )
+    }
 
     private fun viewModel(
         albumId: Long?,
-        albumFlow: Flow<Album?>,
-        photosFlow: Flow<List<Photo>>,
+        albumFlow: Flow<Album?> = flowOf(null),
+        photosFlow: Flow<List<Photo>> = flowOf(emptyList()),
+        saveResult: Result<Long, String> = Result.Success(0L),
     ): AlbumEditViewModel {
         val savedStateHandle = SavedStateHandle(mapOf("albumId" to albumId))
         val repo = stubRepo(albumFlow = albumFlow, photosFlow = photosFlow)
@@ -127,6 +233,7 @@ class AlbumEditViewModelTest {
             savedStateHandle = savedStateHandle,
             getAlbumUseCase = GetAlbumUseCase(repo),
             getPhotosForAlbumUseCase = GetPhotosForAlbumUseCase(repo),
+            saveNewAlbumUseCase = fakeSave(saveResult),
         )
     }
 
