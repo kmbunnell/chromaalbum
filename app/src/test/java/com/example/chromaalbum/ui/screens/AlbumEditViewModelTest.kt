@@ -10,7 +10,9 @@ import com.example.chromaalbum.domain.usecase.AddPhotosUseCase
 import com.example.chromaalbum.domain.usecase.CreateAlbumUseCase
 import com.example.chromaalbum.domain.usecase.GetAlbumUseCase
 import com.example.chromaalbum.domain.usecase.GetPhotosForAlbumUseCase
+import com.example.chromaalbum.domain.usecase.SaveEditedAlbumUseCase
 import com.example.chromaalbum.domain.usecase.SaveNewAlbumUseCase
+import com.example.chromaalbum.domain.usecase.UpdateAlbumUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -186,6 +188,86 @@ class AlbumEditViewModelTest {
             job.cancel()
         }
 
+    @Test
+    fun onPhotosSelected_givenEditMode_whenCalled_thenDisplayUrisContainExistingAndNewPhotos() =
+        runTest(testDispatcher) {
+            val albumFlow = MutableSharedFlow<Album?>(replay = 1)
+            val photosFlow = MutableSharedFlow<List<Photo>>(replay = 1)
+            albumFlow.emit(album(1L, "Vacation", null))
+            photosFlow.emit(listOf(photo(1), photo(2)))
+
+            val viewModel = viewModel(albumId = 1L, albumFlow = albumFlow, photosFlow = photosFlow)
+            val states = mutableListOf<AlbumEditUiState>()
+            val job = launch { viewModel.uiState.collect { states.add(it) } }
+            advanceUntilIdle()
+
+            viewModel.onPhotosSelected(listOf("content://photo/new"))
+            advanceUntilIdle()
+
+            val displayUris = states.last().displayUris
+            assertTrue(displayUris.contains("content://photo/1"))
+            assertTrue(displayUris.contains("content://photo/2"))
+            assertTrue(displayUris.contains("content://photo/new"))
+            job.cancel()
+        }
+
+    @Test
+    fun onDone_givenEditModeAndSaveEditedSucceeds_whenDone_thenNavigateUpTrueAndIsSavingFalse() =
+        runTest(testDispatcher) {
+            val albumFlow = MutableSharedFlow<Album?>(replay = 1)
+            val photosFlow = MutableSharedFlow<List<Photo>>(replay = 1)
+            albumFlow.emit(album(1L, "Name", null))
+            photosFlow.emit(emptyList())
+
+            val viewModel =
+                viewModel(
+                    albumId = 1L,
+                    albumFlow = albumFlow,
+                    photosFlow = photosFlow,
+                    saveEditedResult = Result.Success(Unit),
+                )
+            val states = mutableListOf<AlbumEditUiState>()
+            val job = launch { viewModel.uiState.collect { states.add(it) } }
+            advanceUntilIdle()
+
+            viewModel.onDone()
+            advanceUntilIdle()
+
+            val last = states.last()
+            assertTrue(last.navigateUp)
+            assertFalse(last.isSaving)
+            job.cancel()
+        }
+
+    @Test
+    fun onDone_givenEditModeAndSaveEditedFails_whenDone_thenErrorSetAndNoNavigation() =
+        runTest(testDispatcher) {
+            val albumFlow = MutableSharedFlow<Album?>(replay = 1)
+            val photosFlow = MutableSharedFlow<List<Photo>>(replay = 1)
+            albumFlow.emit(album(1L, "Name", null))
+            photosFlow.emit(emptyList())
+
+            val viewModel =
+                viewModel(
+                    albumId = 1L,
+                    albumFlow = albumFlow,
+                    photosFlow = photosFlow,
+                    saveEditedResult = Result.Failure("edit failed"),
+                )
+            val states = mutableListOf<AlbumEditUiState>()
+            val job = launch { viewModel.uiState.collect { states.add(it) } }
+            advanceUntilIdle()
+
+            viewModel.onDone()
+            advanceUntilIdle()
+
+            val last = states.last()
+            assertNotNull(last.error)
+            assertFalse(last.navigateUp)
+            assertFalse(last.isSaving)
+            job.cancel()
+        }
+
     // region — helpers
 
     /**
@@ -226,6 +308,7 @@ class AlbumEditViewModelTest {
         albumFlow: Flow<Album?> = flowOf(null),
         photosFlow: Flow<List<Photo>> = flowOf(emptyList()),
         saveResult: Result<Long, String> = Result.Success(0L),
+        saveEditedResult: Result<Unit, String> = Result.Success(Unit),
     ): AlbumEditViewModel {
         val savedStateHandle = SavedStateHandle(mapOf("albumId" to albumId))
         val repo = stubRepo(albumFlow = albumFlow, photosFlow = photosFlow)
@@ -234,6 +317,40 @@ class AlbumEditViewModelTest {
             getAlbumUseCase = GetAlbumUseCase(repo),
             getPhotosForAlbumUseCase = GetPhotosForAlbumUseCase(repo),
             saveNewAlbumUseCase = fakeSave(saveResult),
+            saveEditedAlbumUseCase = fakeEditSave(saveEditedResult),
+        )
+    }
+
+    private fun fakeEditSave(saveResult: Result<Unit, String>): SaveEditedAlbumUseCase {
+        val controlRepo =
+            object : AlbumRepository {
+                override fun getAlbumById(albumId: Long): Flow<Album?> =
+                    when (saveResult) {
+                        is Result.Success -> flowOf(album(albumId, "Test", null))
+                        is Result.Failure -> flowOf(null)
+                    }
+
+                override fun getPhotosForAlbum(albumId: Long): Flow<List<Photo>> = flowOf(emptyList())
+
+                override suspend fun updateAlbum(album: Album) = Unit
+
+                override suspend fun addPhotos(photos: List<Photo>) = Unit
+
+                override suspend fun persistPalette(albumId: Long, palette: BlendedPalette) = Unit
+
+                override fun getAllAlbums(): Flow<List<Album>> = error("unused")
+
+                override suspend fun createAlbum(name: String, description: String?): Long = error("unused")
+
+                override suspend fun deleteAlbum(album: Album): Unit = error("unused")
+
+                override suspend fun removePhoto(photo: Photo): Unit = error("unused")
+            }
+        return SaveEditedAlbumUseCase(
+            updateAlbumUseCase = UpdateAlbumUseCase(controlRepo),
+            addPhotosUseCase = AddPhotosUseCase(controlRepo),
+            blendFn = { null },
+            repository = controlRepo,
         )
     }
 

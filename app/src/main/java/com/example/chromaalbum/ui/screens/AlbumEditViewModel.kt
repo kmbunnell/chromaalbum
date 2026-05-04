@@ -7,6 +7,7 @@ import com.example.chromaalbum.domain.model.Photo
 import com.example.chromaalbum.domain.model.Result
 import com.example.chromaalbum.domain.usecase.GetAlbumUseCase
 import com.example.chromaalbum.domain.usecase.GetPhotosForAlbumUseCase
+import com.example.chromaalbum.domain.usecase.SaveEditedAlbumUseCase
 import com.example.chromaalbum.domain.usecase.SaveNewAlbumUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,11 +24,14 @@ data class AlbumEditUiState(
     val description: String = "",
     val isLoading: Boolean = false,
     val photos: List<Photo> = emptyList(),
-    val displayUris: List<String> = emptyList(),
+    val pendingUris: List<String> = emptyList(),
     val isSaving: Boolean = false,
     val navigateUp: Boolean = false,
     val error: String? = null,
-)
+) {
+    val displayUris: List<String>
+        get() = if (isCreateMode) pendingUris else photos.map { it.uri } + pendingUris
+}
 
 @HiltViewModel
 class AlbumEditViewModel
@@ -37,6 +41,7 @@ class AlbumEditViewModel
         private val getAlbumUseCase: GetAlbumUseCase,
         private val getPhotosForAlbumUseCase: GetPhotosForAlbumUseCase,
         private val saveNewAlbumUseCase: SaveNewAlbumUseCase,
+        private val saveEditedAlbumUseCase: SaveEditedAlbumUseCase,
     ) : ViewModel() {
         private val albumId: Long? = savedStateHandle["albumId"]
 
@@ -66,7 +71,6 @@ class AlbumEditViewModel
                                     name = album.name,
                                     description = album.description ?: "",
                                     photos = photos,
-                                    displayUris = photos.map { it.uri },
                                     error = null,
                                 )
                             }
@@ -85,23 +89,36 @@ class AlbumEditViewModel
         }
 
         fun onPhotosSelected(uris: List<String>) {
-            _uiState.update { it.copy(displayUris = it.displayUris + uris) }
+            _uiState.update { it.copy(pendingUris = it.pendingUris + uris) }
         }
 
         fun onDone() {
-            if (!_uiState.value.isCreateMode) return
             val state = _uiState.value
-            _uiState.update { it.copy(isSaving = true) }
+            _uiState.update { it.copy(isSaving = true, pendingUris = emptyList()) }
             viewModelScope.launch {
-                saveNewAlbumUseCase(state.name, state.description.takeIf { it.isNotBlank() }, state.displayUris)
-                    .collect { result ->
-                        when (result) {
-                            is Result.Success ->
-                                _uiState.update { it.copy(isSaving = false, navigateUp = true) }
-                            is Result.Failure ->
-                                _uiState.update { it.copy(isSaving = false, error = result.error) }
-                        }
-                    }
+                if (state.isCreateMode) {
+                    saveNewAlbumUseCase(
+                        state.name,
+                        state.description.takeIf { it.isNotBlank() },
+                        state.pendingUris,
+                    ).collect { onSaveResult(it) }
+                } else {
+                    val id = albumId ?: return@launch
+                    saveEditedAlbumUseCase(
+                        id,
+                        state.name,
+                        state.description.takeIf { it.isNotBlank() },
+                        state.pendingUris,
+                        state.displayUris,
+                    ).collect { onSaveResult(it) }
+                }
+            }
+        }
+
+        private fun onSaveResult(result: Result<*, String>) {
+            when (result) {
+                is Result.Success -> _uiState.update { it.copy(isSaving = false, navigateUp = true, pendingUris = emptyList()) }
+                is Result.Failure -> _uiState.update { it.copy(isSaving = false, error = result.error) }
             }
         }
 
