@@ -124,7 +124,7 @@ class SaveEditedAlbumUseCaseTest {
 
     companion object {
         private fun defaultAlbum(id: Long = 1L) =
-            Album(id = id, name = "Test", description = null, createdAt = 0L, updatedAt = 0L, coverPhotoUri = null)
+            Album(id = id, name = "Test", description = null, createdAt = 0L, updatedAt = 0L)
     }
 
     // endregion

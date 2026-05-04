@@ -7,6 +7,7 @@ import coil3.ImageLoader
 import coil3.request.ErrorResult
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
+import coil3.request.CachePolicy
 import coil3.request.allowHardware
 import coil3.size.Size
 import coil3.toBitmap
@@ -32,6 +33,7 @@ class PhotoLoaderImpl
                         .data(uri)
                         .size(Size(100, 100))
                         .allowHardware(false)
+                        .memoryCachePolicy(CachePolicy.DISABLED)
                         .build()
                 when (val result = imageLoader.execute(request)) {
                     is SuccessResult -> result.image.toBitmap()
