@@ -137,7 +137,7 @@ class AlbumEditViewModelTest {
         }
 
     @Test
-    fun onDone_givenUseCaseSuccess_whenDone_thenNavigateUpTrueAndIsSavingFalse() =
+    fun onDone_givenUseCaseSuccess_whenDone_thenNavigateUpTrueAndIsSavingTrue() =
         runTest(testDispatcher) {
             val viewModel = viewModel(albumId = null, saveResult = Result.Success(1L))
             val states = mutableListOf<AlbumEditUiState>()
@@ -148,7 +148,7 @@ class AlbumEditViewModelTest {
 
             val last = states.last()
             assertTrue(last.navigateUp)
-            assertFalse(last.isSaving)
+            assertTrue(last.isSaving)
             job.cancel()
         }
 
@@ -184,6 +184,7 @@ class AlbumEditViewModelTest {
             advanceUntilIdle()
 
             assertFalse(states.last().navigateUp)
+            assertFalse(states.last().isSaving)
             assertNull(states.last().error)
             job.cancel()
         }
@@ -212,7 +213,7 @@ class AlbumEditViewModelTest {
         }
 
     @Test
-    fun onDone_givenEditModeAndSaveEditedSucceeds_whenDone_thenNavigateUpTrueAndIsSavingFalse() =
+    fun onDone_givenEditModeAndSaveEditedSucceeds_whenDone_thenNavigateUpTrueAndIsSavingTrue() =
         runTest(testDispatcher) {
             val albumFlow = MutableSharedFlow<Album?>(replay = 1)
             val photosFlow = MutableSharedFlow<List<Photo>>(replay = 1)
@@ -235,7 +236,7 @@ class AlbumEditViewModelTest {
 
             val last = states.last()
             assertTrue(last.navigateUp)
-            assertFalse(last.isSaving)
+            assertTrue(last.isSaving)
             job.cancel()
         }
 

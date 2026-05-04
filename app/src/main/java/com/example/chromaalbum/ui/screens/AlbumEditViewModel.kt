@@ -30,7 +30,14 @@ data class AlbumEditUiState(
     val error: String? = null,
 ) {
     val displayUris: List<String>
-        get() = if (isCreateMode) pendingUris else photos.map { it.uri } + pendingUris
+        get() =
+            if (isCreateMode) {
+                pendingUris
+            } else {
+                val persisted = photos.map { it.uri }
+                val persistedSet = persisted.toHashSet()
+                persisted + pendingUris.filter { it !in persistedSet }
+            }
 }
 
 @HiltViewModel
@@ -94,7 +101,7 @@ class AlbumEditViewModel
 
         fun onDone() {
             val state = _uiState.value
-            _uiState.update { it.copy(isSaving = true, pendingUris = emptyList()) }
+            _uiState.update { it.copy(isSaving = true) }
             viewModelScope.launch {
                 if (state.isCreateMode) {
                     saveNewAlbumUseCase(
@@ -117,12 +124,12 @@ class AlbumEditViewModel
 
         private fun onSaveResult(result: Result<*, String>) {
             when (result) {
-                is Result.Success -> _uiState.update { it.copy(isSaving = false, navigateUp = true, pendingUris = emptyList()) }
+                is Result.Success -> _uiState.update { it.copy(navigateUp = true) }
                 is Result.Failure -> _uiState.update { it.copy(isSaving = false, error = result.error) }
             }
         }
 
         fun onNavigatedUp() {
-            _uiState.update { it.copy(navigateUp = false) }
+            _uiState.update { it.copy(navigateUp = false, isSaving = false) }
         }
     }
