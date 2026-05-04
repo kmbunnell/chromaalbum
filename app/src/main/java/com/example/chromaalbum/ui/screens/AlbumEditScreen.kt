@@ -110,16 +110,14 @@ internal fun AlbumEditContent(
                     }
                 },
                 actions = {
-                    if (uiState.isCreateMode) {
-                        IconButton(
-                            onClick = onAddPhotos,
-                            enabled = !isPickerActive,
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.PhotoLibrary,
-                                contentDescription = stringResource(R.string.album_edit_button_add_photos),
-                            )
-                        }
+                    IconButton(
+                        onClick = onAddPhotos,
+                        enabled = !isPickerActive,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.PhotoLibrary,
+                            contentDescription = stringResource(R.string.album_edit_button_add_photos),
+                        )
                     }
                     TextButton(
                         onClick = onDone,
